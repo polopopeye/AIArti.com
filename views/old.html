@@ -1,0 +1,161 @@
+<eBD:USE LIB="sportsManager"/>
+<eBD:ARGS name="idJugador" DEFAULT="" />
+<eBD:ARGS name="idEstudio" DEFAULT="" />
+
+<eBD:SET VAR="res" VALUE="" />
+<eBD:IF EXPR="$idJugador != ''">
+  <eBD:SET VAR="where" VALUE="Where idJugadorClub = $idJugador and idEstudio= $idEstudio" />
+  <eBD:ELSE>
+    <eBD:SET VAR="where" VALUE="Where idEstudio= $idEstudio" />
+  </eBD:ELSE>
+</eBD:IF>
+
+<eBD:QUERY NAME="participantes" DATASOURCE="principal">
+      SELECT _idRegistro, apellidos, dorsal, idEquipoClub, idEstudio, idJugadorClub,
+             idParticipante, imagen, nombre, nombreEquipo, idPizarra
+        FROM participantesScouting
+             $where
+      Order by idEquipoClub, dorsal + 0
+</eBD:QUERY>
+<eBD:IF EXPR="&participantes > 0">
+  <eBD:FOREACH QUERY="participantes">
+
+    <eBD:FETCHROW QUERY="participantes" NAME="par"/>
+    <eBD:FILEPATH VAR="imgSrc" TABLEID="300" ROW="par" FIELDNAME="imagen"/>
+
+    <eBD:SET VAR="idJugador" VALUE="&par.idJugadorClub" />
+    <eBD:SET VAR="nombreJugador" VALUE="&par.nombre" />
+    <eBD:SET VAR="apellidosJugador" VALUE="&par.apellidos" />
+    <eBD:SET VAR="dorsalJugador" VALUE="&par.dorsal" />
+    <eBD:SET VAR="nombreEquipo" VALUE="&par.nombreEquipo" />
+    <eBD:SET VAR="idPizarra" VALUE="&par.idPizarra" />
+    <eBD:SET VAR="idParticipanteBlackboard" VALUE="&par.idParticipante" />
+
+
+
+    <eBD:SET VAR="video" VALUE='<i class="fas fa-video" style="font-size: 30;padding-top: 25!important;padding-bottom: 10 !important;padding: 15;cursor: pointer;/*position: absolute;bottom: 9px;left: 15;*/"
+        data-toggle="modal" data-target="#observacionesJugador" data-id="$idJugador" data-dorsal="$dorsalJugador" data-nombre="$nombreJugador" data-equipo="$nombreEquipo"
+        data-apellidos="$apellidosJugador" data-src="$imgSrc" data-idEstudio="$idEstudio" data-tipo="V" data-backdrop="static"></i>' />
+
+  <eBD:CALL FUNCTION="getAccionesJugador" VAR="accionesJugador" idEstudio="$idEstudio" idJugador="$idJugador"/>
+  <eBD:SET VAR="tags" VALUE="" />
+  <eBD:SET VAR="jugadas" VALUE="" />
+
+  <eBD:FOREACH ARRAY="accionesJugador" ITERATOR="i">
+    <eBD:SET VAR="hash" VALUE="$i" />
+    <eBD:SET VAR="idBoton" VALUE="@hash{idBoton}" />
+    <eBD:SET VAR="idAccion" VALUE="@hash{idAccion}" />
+    <eBD:SET VAR="color" VALUE="@hash{color}" />
+    <eBD:SET VAR="colorT" VALUE="@hash{coloT}" />
+    <eBD:SET VAR="idJugadorAccion" VALUE="@hash{idJugador}" />
+    <eBD:SET VAR="nombre" VALUE="@hash{Nombre}" />
+    <eBD:SET VAR="namePadres" VALUE="@hash{namePadres}" />
+    <eBD:SET VAR="tiempo" VALUE="@hash{tiempo}" />
+    <eBD:SET VAR="segundos" EXPR="$tiempo/1000" />
+    <eBD:SET VAR="minutos" EXPR="$segundos/60" />
+    <eBD:SET VAR="minutos" VALUE="#[eBDMath.int($minutos)]" />
+    <eBD:SET VAR="horas" EXPR="$minutos/60" />
+    <eBD:SET VAR="horas" VALUE="#[eBDMath.int($horas)]" />
+    <eBD:IF EXPR="$horas < 10">
+      <eBD:SET VAR="sHoras" VALUE="0#[eBDMath.int($horas)]"/>" />
+      <eBD:ELSE>
+        <eBD:SET VAR="sHoras" VALUE="#[eBDMath.int($horas)]" />
+      </eBD:ELSE>
+    </eBD:IF>
+    <eBD:SET VAR="segundos" EXPR="$segundos-($minutos*60)" />
+    <eBD:SET VAR="minutos" EXPR="$minutos-($horas*60)" />
+    <eBD:IF EXPR="$minutos < 10">
+      <eBD:SET VAR="sMinutos" VALUE="0#[eBDMath.int($minutos)]" />
+      <eBD:ELSE>
+        <eBD:SET VAR="sMinutos" VALUE="#[eBDMath.int($minutos)]" />
+      </eBD:ELSE>
+    </eBD:IF>
+    <eBD:IF EXPR="$segundos < 10">
+      <eBD:SET VAR="sSegundos" VALUE="0#[eBDMath.int($segundos)]" />
+      <eBD:ELSE>
+        <eBD:SET VAR="sSegundos" VALUE="#[eBDMath.int($segundos)]" />
+      </eBD:ELSE>
+    </eBD:IF>
+    <eBD:SET VAR="temporizador" VALUE="$sHoras:$sMinutos:$sSegundos" />
+
+    <eBD:IF EXPR="$idBoton != -1">
+    <eBD:DOC>
+      <eBD:SET VAR="tags" VALUE="$tags <span id='tag-$idAccion' style='background-color: $color;margin: 5;color:$colorT;white-space:nowrap;'>$nombre</span>" />
+    </eBD:DOC>
+    <eBD:IF EXPR="$namePadres != ''">
+      <eBD:SET VAR="tags" VALUE="$tags <span class='tagAtributo' id='tag-$idAccion' style='background-color: $color;margin: 5;white-space:nowrap;'>$namePadres-$nombre</span>" />
+      <eBD:ELSE>
+        <eBD:SET VAR="tags" VALUE="$tags <span class='tagAtributo' id='tag-$idAccion' style='background-color: $color;margin: 5;white-space:nowrap;'>$nombre</span>" />
+      </eBD:ELSE>
+    </eBD:IF>
+      <eBD:ELSE>
+        <eBD:SET VAR="jugadas" VALUE="$jugadas <span id='tiemAcc-$idAccion' style='background-color: $color;margin: 5;color:$colorT;white-space:nowrap;'><i class='fas fa-video' style='font-size: 16;'>
+            </i>  $temporizador</span>" />
+      </eBD:ELSE>
+    </eBD:IF>
+
+  </eBD:FOREACH>
+  <eBD:DOC>
+    <span class="text-right" style="display: block;float: right;margin-right: 5;margin-bottom: 5;font-size: 18;" data-toggle="modal" data-equipo="$nombreEquipo"
+          data-target="#observacionesJugador" data-id="$idJugador" data-nombre="$dorsalJugador - $nombreJugador $apellidosJugador" data-src="$imgSrc" data-backdrop="static">
+      <i class="fas fa-file-alt"></i>
+      $idEstudio $dorsalJugador $idJugador
+    </span>
+    <eBD:ENCODE VAR="uidURLencripted" VALUE="$nombreJugador$apellidosJugador$nombreEquipo" INTO="BASE64"/>
+    Aqui lo que tengo que buscar es un registro con idPizarra si el registro existe dentro de esta base de datos, entonces mostrar dentro de la función, si no existe,
+    ejecutar webservice para introducir una idpizarra y ejecutar un randomstring para la actualización y la visualización de la función.
+  </eBD:DOC>
+
+ <eBD:SET VAR="namePizarra" VALUE="Escouting - $nombreEquipo - $dorsalJugador - $nombreJugador $apellidosJugador"/>
+
+  <eBD:IF expr="$idPizarra">
+    <eBD:SET VAR="blackboardFunction" VALUE="selectplayerblackboard('$idPizarra','$namePizarra','$idParticipanteBlackboard',false);"/>
+    <eBD:ELSE>
+    <eBD:SET VAR="uidLastBlack" VALUE="document.getElementById('UIDurlBlackRand$idJugador').innerHTML"/>
+      <eBD:SET VAR="blackboardFunction" VALUE="selectplayerblackboard($uidLastBlack,'$namePizarra','$idParticipanteBlackboard',true);"/>
+    </eBD:ELSE>
+  </eBD:IF>
+
+      <eBD:SET VAR="onloadFunc" VALUE="document.getElementById('UIDurlBlackRand$idJugador').innerHTML=Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)"/>
+
+
+  <eBD:SET VAR="añadirJugada" VALUE="añadirCalidad(-1,-1,'','Jugada',11,'','#ffffff','#000000',2,2, $idJugador)" />
+  <eBD:SET VAR="res" VALUE='$res
+    <div id="playVid$idJugador" class="row clip-video-est" data-idDiv="playVid$idJugador" data-id="$idJugador" style="margin-top: 10;border:0;border-bottom:2px solid rgb(215, 55, 27) ;border-radius:0;background-color:white;color:black;margin-right: 0px;margin-left: 0px;">
+      <div id="resaltoPlayVid$idJugador" class="col-md-12 resaltoPlayVid" >
+        <div class="row">
+          <div id="divima$idJugador" class="col-xl-3 col-lg-4 col-md-6 col-xs-12" style="/*padding:0;margin-top: 10;*/ padding:5;">
+            <img alt="image" src="$imgSrc" class="img-reponsive" width="100%" title="$nombreJugador $apellidosJugador" style="max-width: 75px;" onclick="$añadirJugada">
+            $video
+          </div>
+          <div class="col-xl-9 col-lg-8 col-md-6 col-sm-12 col-xs-12" style="padding:0;" >
+            <div id="jugador$idJugador">
+              <div id="$idJugador">
+                  <span id="datosEquipo$idJugador" class="play-vid-nombre font-weight-bold" style="font-size: 18;"><b>$nombreEquipo</b></span>
+                  <span class="text-right" style="display: block;float: right;margin-right: 5;margin-top: 25;font-size: 30;cursor: pointer;" data-toggle="modal"
+                      data-target="#observacionesJugador" data-id="$idJugador" data-dorsal="$dorsalJugador" data-nombre="$nombreJugador" data-equipo="$nombreEquipo"
+                      data-apellidos="$apellidosJugador" data-src="$imgSrc" data-idEstudio="$idEstudio" data-tipo="O" data-backdrop="static">
+                    <i class="fas fa-microphone"></i>
+                  </span>
+                  <br>
+                  <span id="datosJugador$idJugador" class="play-vid-nombre font-weight-bold" style="font-size: 20;"><b>$dorsalJugador - $nombreJugador $apellidosJugador</b></span>
+                <br>
+                <span id="tags$idJugador" style="font-size: 12px;">$tags</span>
+                <br><br>
+                <span id="jugadas$idJugador" style="font-size: 12px;">$jugadas</span>
+
+
+                <span id="$idEstudio$dorsalJugador$idJugador" class="text-right" style="display: block;float: right;margin-right: 5;margin-bottom: 10px;font-size: 30;cursor: pointer;"  onclick="$blackboardFunction" data-toggle="modal" data-target="#pizarraJugador" data-target="#observacionesJugador" data-id="$idJugador" data-dorsal="$dorsalJugador" data-nombre="$nombreJugador" data-equipo="$nombreEquipo"
+                      data-apellidos="$apellidosJugador" data-src="$imgSrc" data-idEstudio="$idEstudio" data-tipo="O" data-backdrop="static"><i class="fas fa-chalkboard" ></i></i></span>
+
+               <div style="display:none;" id="UIDurlBlackRand$idJugador"><script type="text/javascript">$onloadFunc;</script></div>
+                <!-- span class="text-right" style="display: block;float: right;margin-right: 5;margin-bottom: 10px;font-size: 30;cursor: pointer;"><i class="fas fa-chalkboard"></i></i></span -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>' />
+  </eBD:FOREACH>
+</eBD:IF>
+<eBD:RETURN VALUE="$res"/>

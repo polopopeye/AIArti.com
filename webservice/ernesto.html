@@ -1,0 +1,1218 @@
+
+<eBD:ARGS name="idElementoDisciplina" DEFAULT="" />
+<eBD:ARGS name="idElementoCategorias" DEFAULT="" />
+<eBD:ARGS name="idElementoEquipos" DEFAULT="" />
+
+<eBD:ARGS name="idCliente" DEFAULT="" />
+<eBD:ARGS name="idSubCliente" DEFAULT="" />
+
+<eBD:ARGS name="idUsuario" DEFAULT="" />
+
+<eBD:USE LIB="Utilidades"/>
+
+<eBD:REPLACE VAR="idElementoCategorias" MATCH="," REPLACE="-"/>
+<eBD:REPLACE VAR="idElementoEquipos" MATCH="," REPLACE="-"/>
+<eBD:ARGS name="idCategoria" DEFAULT="" />
+<eBD:ARGS name="idEquipo" DEFAULT="" />
+<eBD:CALL FUNCTION="getIdDeporte" VAR="idDeporte" idElementoDisciplina="$idElementoDisciplina"/>
+
+<eBD:ARGS name="listado" DEFAULT="Activas" />
+<eBD:ARGS name="offset" DEFAULT="" />
+<eBD:IF EXPR="$offset == ''">
+  <eBD:SET VAR="offset" VALUE="0" />
+</eBD:IF>
+<eBD:ARGS name="tareaSel" DEFAULT="" />
+<eBD:IF EXPR="$tareaSel == ''">
+  <eBD:SET VAR="tareaSel" VALUE="-1" />
+</eBD:IF>
+<eBD:ARGS name="buscador" DEFAULT="" />
+
+<eBD:SET VAR="jsonNavegacion" VALUE='{"activas":{"offset":0,"seleccionado":-1,"activa":true,"buscador":""},"repositorio":{"offset":0,"seleccionado":-1,"activa":false,"buscador":""},"archivadas":{"offset":0,"seleccionado":-1,"activa":false,"buscador":""}}' />
+<eBD:IF EXPR="$listado == 'Activas'">
+  <eBD:SET VAR="jsonNavegacion" VALUE='{"activas":{"offset":$offset,"seleccionado":$tareaSel,"activa":true,"buscador":"$buscador"},"repositorio":{"offset":0,"seleccionado":-1,"activa":false,"buscador":""},"archivadas":{"offset":0,"seleccionado":-1,"activa":false,"buscador":""}}' />
+  <eBD:ELSIF EXPR="$listado == 'Repositorio'">
+    <eBD:SET VAR="jsonNavegacion" VALUE='{"activas":{"offset":0,"seleccionado":-1,"activa":false,"buscador":""},"repositorio":{"offset":$offset,"seleccionado":$tareaSel,"activa":true,"buscador":"$buscador"},"archivadas":{"offset":0,"seleccionado":-1,"activa":false,"buscador":""}}' />
+    <eBD:ELSIF EXPR="$listado == 'Archivadas'">
+      <eBD:SET VAR="jsonNavegacion" VALUE='{"activas":{"offset":0,"seleccionado":-1,"activa":false,"buscador":""},"repositorio":{"offset":0,"seleccionado":-1,"activa":false,"buscador":""},"archivadas":{"offset":$offset,"seleccionado":$tareaSel,"activa":true,"buscador":"$buscador"}}' />
+    </eBD:ELSIF>
+  </eBD:ELSIF>
+</eBD:IF>
+
+<script>
+  var navegacion = <eBD:OUT VALUE="$jsonNavegacion" />;
+  function archivarElemento()
+  {
+    $.ajax({
+      type: "POST",
+      url: "/formularioIntel.archivarSesion",
+      data: {
+        'idSesion': $('#idModalArchivar').val()
+      },
+      success: function (res) {
+        navegacion.activas.seleccionado = -1;
+        cargaListado('Activas');
+      }
+    });
+  }
+
+  $('#modalArchivar').on('show.bs.modal', function(e) {
+    var idSesion = $(e.relatedTarget).data('id');
+    $('#idModalArchivar').val(idSesion);
+  });
+
+  //Este modal se carga al abrir el modal de la info de cada tarjeta
+  $('#modalInfoSesiones').on('show.bs.modal', function(e) {
+    $('#tituloCosaModal').html('');
+    $('#modalBodyInfoSesiones').html('');
+
+    var idSesion = $(e.relatedTarget).data('id');
+
+    var tipoSesion;
+    if(navegacion.activas.activa) tipoSesion = 'Activas';
+    if(navegacion.repositorio.activa) tipoSesion = 'Repositorio';
+    if(navegacion.archivadas.activa) tipoSesion = 'Archivadas';
+
+    $.ajax({
+      type: "POST",
+      url: "/formularioIntel.mostrarLateralSesion",
+      data: {
+        'idSesion': idSesion,
+        'offset': 0,
+        'idElementoDeporte': '<eBD:OUT VALUE="$idElementoDisciplina" />',
+        'idElementoCategorias': '<eBD:OUT VALUE="$idElementoCategorias" />',
+        'idElementoEquipos': '<eBD:OUT VALUE="$idElementoEquipos" />',
+        'idCliente': '<eBD:OUT VALUE="$idCliente" />',
+        'idSubCliente': '<eBD:OUT VALUE="$idSubCliente" />',
+        'idUsuario': '<eBD:OUT VALUE="$idUsuario" />',
+        'tipo': 'modal',
+        'tab': tipoSesion,
+        'key': $('#keyBuscador'+tipoSesion).val()
+      },
+      success: function (res) {
+        $('#modalBodyInfoSesiones').html(res);
+        mostrarTituloModal(idSesion);
+        cambiarTabSesion('Modal');
+      }
+    });
+
+  });
+
+  //Esta función se encarga de recuperar el titulo de la tarea que estamos previsualizando en el modal
+  function mostrarTituloModal(idSesion)
+  {
+    $.ajax({
+      type: "POST",
+      url: "/formularioIntel.mostrarTituloSesion",
+      data: {
+        'idSesion': idSesion
+      },
+      success: function (res) {
+        $('#tituloCosaModal').html('<b>'+res+'</b>');
+      }
+    });
+  }
+
+  //Listener: Estos se encargan de detectar cualquier cambio, en uno de los inputs de busqueda y lanzar de forma immediata la función de busqueda
+  var inputActivas = document.getElementById('keyBuscadorActivas');
+  inputActivas.addEventListener('keyup',function(){ buscador('Activas') });
+
+  var inputArchivadas = document.getElementById('keyBuscadorArchivadas');
+  inputArchivadas.addEventListener('keyup',function(){ buscador('Archivadas') });
+
+  var inputRepositorio = document.getElementById('keyBuscadorRepositorio');
+  inputRepositorio.addEventListener('keyup',function(){ buscador('Repositorio') });
+
+
+  //Funciones de listados
+
+  var limit = 10;
+  var offset = 0;
+
+
+  $( document ).ready(function() {
+   // mostrarBotones();
+    $('#keyBuscadorActivas').val(navegacion.activas.buscador);
+    $('#keyBuscadorArchivadas').val(navegacion.archivadas.buscador);
+    $('#keyBuscadorRepositorio').val(navegacion.repositorio.buscador);
+
+    if(navegacion.activas.activa) {
+      cargarSesiones('Activas',limit, navegacion.activas.offset, navegacion.activas.buscador, 1);
+      mostrarBotones('Activas', navegacion.activas.buscador);
+      $('#botonCrearNueva').removeClass('d-none');
+    }
+    if(navegacion.repositorio.activa) {
+      cargarSesiones('Repositorio',limit, navegacion.repositorio.offset, navegacion.repositorio.buscador, 1);
+      mostrarBotones('Repositorio', navegacion.repositorio.buscador);
+      $('#botonCrearNueva').addClass('d-none');
+    }
+    if(navegacion.archivadas.activa) {
+      cargarSesiones('Archivadas',limit, navegacion.archivadas.offset, navegacion.archivadas.buscador, 1);
+      mostrarBotones('Archivadas', navegacion.archivadas.buscador);
+      $('#botonCrearNueva').addClass('d-none');
+    }
+  });
+
+  function cargarSesiones(tipoSesion, limit, offset, key, modo)
+  {
+    if(tipoSesion == 'Activas') {
+      if(key == '' && $('#keyBuscadorActivas').val() != '') key = $('#keyBuscadorActivas').val();
+      navegacion.activas.offset = offset;
+      navegacion.activas.buscador = key;
+      navegacion.activas.activa = true;
+      navegacion.repositorio.activa = false;
+      navegacion.archivadas.activa = false;
+      $('#botonCrearNueva').removeClass('d-none');
+    }
+    if(tipoSesion == 'Repositorio') {
+      if(key == '' && $('#keyBuscadorRepositorio').val() != '') key = $('#keyBuscadorRepositorio').val();
+      navegacion.repositorio.offset = offset;
+      navegacion.repositorio.buscador = key;
+      navegacion.repositorio.activa = true;
+      navegacion.activas.activa = false;
+      navegacion.archivadas.activa = false;
+      $('#botonCrearNueva').addClass('d-none');
+    }
+    if(tipoSesion == 'Archivadas') {
+      if(key == '' && $('#keyBuscadorArchivadas').val() != '') key = $('#keyBuscadorArchivadas').val();
+      navegacion.archivadas.offset = offset;
+      navegacion.archivadas.buscador = key;
+      navegacion.archivadas.activa = true;
+      navegacion.activas.activa = false;
+      navegacion.repositorio.activa = false;
+      $('#botonCrearNueva').addClass('d-none');
+    }
+    $.ajax({
+      type: "POST",
+      url: "/formularioIntel.cargarTablaSesiones",
+      data: {
+        'limit': limit,
+        'offset': offset,
+        'key': key,
+        'idElementoDeporte': '<eBD:OUT VALUE="$idElementoDisciplina" />',
+        'idElementoCategorias': '<eBD:OUT VALUE="$idElementoCategorias" />',
+        'idElementoEquipos': '<eBD:OUT VALUE="$idElementoEquipos" />',
+        'idCliente': '<eBD:OUT VALUE="$idCliente" />',
+        'idSubCliente': '<eBD:OUT VALUE="$idSubCliente" />',
+        'idUsuario': '<eBD:OUT VALUE="$idUsuario" />',
+        'tipoSesion': tipoSesion
+      },
+      success: function (res) {
+        $('#listaSesiones'+tipoSesion).html(res);
+
+        mostrarContador(tipoSesion, key, offset);
+
+        if(modo == 1)
+        {
+          var idSesion = $('#idPrimero').val();
+          if(tipoSesion == 'Activas') {
+            if($('#'+navegacion.activas.seleccionado+'-'+tipoSesion).length == 0) navegacion.activas.seleccionado = idSesion;
+            idSesion = navegacion.activas.seleccionado;
+          }
+          if(tipoSesion == 'Repositorio') {
+            if($('#'+navegacion.repositorio.seleccionado+'-'+tipoSesion).length == 0) navegacion.repositorio.seleccionado = idSesion;
+            idSesion = navegacion.repositorio.seleccionado;
+          }
+          if(tipoSesion == 'Archivadas') {
+            if($('#'+navegacion.archivadas.seleccionado+'-'+tipoSesion).length == 0) navegacion.archivadas.seleccionado = idSesion;
+            idSesion = navegacion.archivadas.seleccionado;
+          }
+          if(idSesion <= 0) idSesion = $('#idPrimero').val();
+          mostrarLateral(idSesion,tipoSesion);
+        }
+      }
+    });
+  }
+
+  function mostrarBotones(tipoSesion, key)
+  {
+    $.ajax({
+      type: "POST",
+      url: "/formularioIntel.cargarBotonesTablaSesiones",
+      data: {
+        'limit': limit,
+        'key': key,
+        'idElementoDeporte': '<eBD:OUT VALUE="$idElementoDisciplina" />',
+        'idElementoCategorias': '<eBD:OUT VALUE="$idElementoCategorias" />',
+        'idElementoEquipos': '<eBD:OUT VALUE="$idElementoEquipos" />',
+        'idCliente': '<eBD:OUT VALUE="$idCliente" />',
+        'idSubCliente': '<eBD:OUT VALUE="$idSubCliente" />',
+        'idUsuario': '<eBD:OUT VALUE="$idUsuario" />',
+        'tipoSesion': tipoSesion
+      },
+      success: function (res) {
+        $('#botones'+tipoSesion).html(res);
+      }
+    });
+  }
+
+
+  function buscador(tipoSesion)
+  {
+    var key = $('#keyBuscador'+tipoSesion).val();
+    if(tipoSesion == 'Activas') navegacion.activas.buscador = key;
+    if(tipoSesion == 'Repositorio') navegacion.repositorio.buscador = key;
+    if(tipoSesion == 'Archivadas') navegacion.archivadas.buscador = key;
+    mostrarBotones(tipoSesion,key);
+    cargarSesiones(tipoSesion, limit, 0, key, 1);
+  }
+
+  function mostrarContador(tipoSesion, key, offset)
+  {
+    $.ajax({
+      type: "POST",
+      url: "/formularioIntel.contadorSesiones",
+      data: {
+        'limit': limit,
+        'offset':offset,
+        'key': key,
+        'idElementoDeporte': '<eBD:OUT VALUE="$idElementoDisciplina" />',
+        'idElementoCategorias': '<eBD:OUT VALUE="$idElementoCategorias" />',
+        'idElementoEquipos': '<eBD:OUT VALUE="$idElementoEquipos" />',
+        'idCliente': '<eBD:OUT VALUE="$idCliente" />',
+        'idSubCliente': '<eBD:OUT VALUE="$idSubCliente" />',
+        'idUsuario': '<eBD:OUT VALUE="$idUsuario" />',
+        'tipoSesion': tipoSesion
+      },
+      success: function (res) {
+        $('#contador'+tipoSesion).html(res);
+      }
+    });
+  }
+
+  function mostrarLateral(idSesion,tipoSesion)
+  {
+    var key = $('#keyBuscador'+tipoSesion).val();
+    var offset = 0;
+    if(tipoSesion == 'Activas') {
+      navegacion.activas.seleccionado = idSesion;
+      offset = navegacion.activas.offset;
+    }
+    if(tipoSesion == 'Repositorio') {
+      navegacion.repositorio.seleccionado = idSesion;
+      offset = navegacion.repositorio.offset;
+    }
+    if(tipoSesion == 'Archivadas') {
+      navegacion.archivadas.seleccionado = idSesion;
+      offset = navegacion.archivadas.offset;
+    }
+
+    $('#tituloCosa').html('');
+    $('#vistaPreviaSesion').html('');
+    if(idSesion != '-1')
+    {
+      $(".bg-primary").removeClass('bg-primary');
+      $("#"+idSesion+'-'+tipoSesion).addClass('bg-primary');
+
+      $('.btn-infoTarea').removeClass('bg-white');
+      $('.btn-infoTarea').addClass('btn-primary');
+
+
+      $(".titulo-ficha").removeClass('titulo-fichaSelect');
+
+      $("#titulo"+idSesion+tipoSesion).addClass('titulo-fichaSelect');
+
+      $(".subtitulo-ficha").removeClass('titulo-fichaSelect');
+
+      $("#subtitulo"+idSesion+tipoSesion).addClass('titulo-fichaSelect');
+
+      $("#copy"+idSesion+tipoSesion).removeClass('btn-primary');
+      $("#copy"+idSesion+tipoSesion).addClass('bg-white');
+
+      $("#archivar"+idSesion+tipoSesion).removeClass('btn-primary');
+      $("#archivar"+idSesion+tipoSesion).addClass('bg-white');
+
+      $("#info"+idSesion+tipoSesion).removeClass('btn-primary');
+      $("#pdf"+idSesion+tipoSesion).removeClass('btn-primary');
+      $("#info"+idSesion+tipoSesion).addClass('bg-white');
+      $("#pdf"+idSesion+tipoSesion).addClass('bg-white');
+    }
+
+    $.ajax({
+      type: "POST",
+      url: "/formularioIntel.mostrarLateralSesion",
+      data: {
+        'idSesion': idSesion,
+        'offset': offset,
+        'idElementoDeporte': '<eBD:OUT VALUE="$idElementoDisciplina" />',
+        'idElementoCategorias': '<eBD:OUT VALUE="$idElementoCategorias" />',
+        'idElementoEquipos': '<eBD:OUT VALUE="$idElementoEquipos" />',
+        'idCliente': '<eBD:OUT VALUE="$idCliente" />',
+        'idSubCliente': '<eBD:OUT VALUE="$idSubCliente" />',
+        'idUsuario': '<eBD:OUT VALUE="$idUsuario" />',
+        'tipo': 'normal',
+        'tab': tipoSesion,
+        'key': key
+      },
+      success: function (res) {
+        $('#vistaPreviaSesion').html(res);
+        mostrarTitulo(idSesion);
+        cambiarTabSesion('');
+      }
+    });
+  }
+
+  function mostrarTitulo(idSesion)
+  {
+
+    $.ajax({
+      type: "POST",
+      url: "/formularioIntel.mostrarTituloSesion",
+      data: {
+        'idSesion': idSesion
+      },
+      success: function (res) {
+        $('#tituloCosa').html('<b>'+res+'</b>')
+      }
+    });
+  }
+
+  //Estas tres funciones se encargan de que al pulsar sobre 'nueva sesion', comprueben quien eres y donde estas situado dentro del organigrama
+
+
+  function generarEnlaceSesion() {
+    var idCategoria = $('#permisoCategoria').val();
+    var idEquipo = $('#permisoEquipo').val();
+
+    if( (idCategoria != '' && idEquipo != '') || (idCategoria == '-1') ) {
+      var tab = '';
+      var offst = 0;
+      var sel = -1;
+      var key = '';
+      if(navegacion.activas.activa){
+        tab = 'Activas';
+        offst = navegacion.activas.offset;
+        sel = navegacion.activas.seleccionado;
+        navegacion.activas.buscador = $('#keyBuscadorActivas').val();
+        key = navegacion.activas.buscador;
+      }
+      if(navegacion.repositorio.activa){
+        tab = 'Repositorio';
+        offst = navegacion.repositorio.offset;
+        sel = navegacion.repositorio.seleccionado;
+        navegacion.repositorio.buscador = $('#keyBuscadorRepositorio').val();
+        key = navegacion.repositorio.buscador;
+      }
+      if(navegacion.archivadas.activa){
+        tab = 'Archivadas';
+        offst = navegacion.archivadas.offset;
+        sel = navegacion.archivadas.seleccionado;
+        navegacion.archivadas.buscador = $('#keyBuscadorArchivadas').val();
+        key = navegacion.archivadas.buscador;
+      }
+
+      $.ajax({
+        type: "POST",
+        url: "/formularioIntel.generarEnlaceSesion",
+        data: {
+          'idCategoria': idCategoria,
+          'idEquipo': idEquipo,
+          'idDeporte': <eBD:OUT VALUE="$idDeporte" />,
+          'tab': tab,
+          'offset': offst,
+          'tareaSel': sel,
+          'key': key
+        },
+        success: function (res) {
+          location.href = res;
+        }
+      });
+    }
+    else
+    {
+      $('#errorPermisos').html('¡Selecciona algún campo!');
+    }
+
+  }
+  /*
+  function generarEnlaceSesion2() {
+    <eBD:SPLIT ARRAY="arrayEquipos" VALUE="$idElementoEquipos" CHAR="," />
+
+    <eBD:CALL FUNCTION="getIdDeporte" VAR="idDeporte" idElementoDisciplina="$idElementoDisciplina"/>
+    <eBD:CALL FUNCTION="getIdCategoria" VAR="idCategoria" idElemento="$idElementoCategorias"/>
+    <eBD:CALL FUNCTION="getIdEquipo" VAR="idEquipo" idElemento="$idElementoEquipos"/>
+
+      var tab = '';
+      var offst = 0;
+      var sel = -1;
+      var key = '';
+      if(navegacion.activas.activa){
+        tab = 'Activas';
+        offst = navegacion.activas.offset;
+        sel = navegacion.activas.seleccionado;
+        navegacion.activas.buscador = $('#keyBuscadorActivas').val();
+        key = navegacion.activas.buscador;
+      }
+      if(navegacion.repositorio.activa){
+        tab = 'Repositorio';
+        offst = navegacion.repositorio.offset;
+        sel = navegacion.repositorio.seleccionado;
+        navegacion.repositorio.buscador = $('#keyBuscadorRepositorio').val();
+        key = navegacion.repositorio.buscador;
+      }
+      if(navegacion.archivadas.activa){
+        tab = 'Archivadas';
+        offst = navegacion.archivadas.offset;
+        sel = navegacion.archivadas.seleccionado;
+        navegacion.archivadas.buscador = $('#keyBuscadorArchivadas').val();
+        key = navegacion.archivadas.buscador;
+      }
+
+      $.ajax({
+        type: "POST",
+        url: "/formularioIntel.generarEnlaceSesion",
+        data: {
+          'idCategoria': <eBD:OUT VALUE="$idCategoria" />,
+          'idEquipo': <eBD:OUT VALUE="$idEquipo" />,
+          'idDeporte': <eBD:OUT VALUE="$idDeporte" />,
+          'tab': tab,
+          'offset': offst,
+          'tareaSel': sel,
+          'key': key
+        },
+        success: function (res) {
+          location.href = res;
+        }
+      });
+  }
+  */
+  function getEquipo()
+  {
+    var idCategoria = $('#permisoCategoria').val();
+
+    if(idCategoria != 'todos')
+    {
+      $.ajax({
+        type: "POST",
+        url: "/formularioIntel.getEquiposPorCategoria",
+        data: {
+          'idCategoria': idCategoria,
+          'idCliente': <eBD:OUT VALUE="$idCliente" />,
+          'idSubCliente': <eBD:OUT VALUE="$idSubCliente" />,
+          'idDeporte': <eBD:OUT VALUE="$idDeporte" />
+        },
+        success: function (res) {
+          $('#labelEquipo').html(res);
+        }
+      });
+    }
+  }
+
+  $('#modalPermisosSesion').on('show.bs.modal', function(e) {
+
+    //get data-id attribute of the clicked element
+    var idDeporte = $(e.relatedTarget).data('deporte');
+    var idCategoria = $(e.relatedTarget).data('categoria');
+    var idEquipo = $(e.relatedTarget).data('equipo');
+
+    $.ajax({
+      type: "POST",
+      url: "/formularioIntel.mostrarModalPermisosTareas",
+      data: {
+        'idDeporte': idDeporte,
+        'idCategoria': idCategoria,
+        'idEquipo': idEquipo,
+        'idCliente': '<eBD:OUT VALUE="$idCliente" />',
+        'idSubCliente': '<eBD:OUT VALUE="$idSubCliente" />',
+        'tipo':'s'
+      },
+      success: function (res) {
+        $('#mostrarModalPermisosTareas').html(res);
+      }
+    });
+  });
+
+  function cargaListado(listado) {
+    $('#listaSesionesActivas').html('');
+    $('#listaSesionesRepositorio').html('');
+    $('#listaSesionesArchivadas').html('');
+    if(listado == 'Activas') {
+      cargarSesiones(listado ,limit, navegacion.activas.offset, $('#keyBuscador'+listado).val(),1);
+      mostrarBotones('Activas', $('#keyBuscador'+listado).val());
+      $('#botonCrearNueva').removeClass('d-none');
+    }
+    if(listado == 'Repositorio') {
+      $('#botonCrearNueva').addClass('d-none');
+      cargarSesiones(listado ,limit, navegacion.repositorio.offset, $('#keyBuscador'+listado).val(),1);
+      mostrarBotones('Repositorio', $('#keyBuscador'+listado));
+    }
+    if(listado == 'Archivadas') {
+      cargarSesiones(listado ,limit, navegacion.archivadas.offset, $('#keyBuscador'+listado).val(),1);
+      mostrarBotones('Archivadas', $('#keyBuscador'+listado).val());
+      $('#botonCrearNueva').addClass('d-none');
+    }
+  }
+
+  function buscadorTareasTabs(tab, modal)
+  {
+    var limit = 5;
+    var key = $('#keyBuscadorTab'+modal+tab).val();
+
+    mostrarBotonesTareasTabs(key,modal);
+    cargarListaTareasTabs(limit, 0,key,modal);
+
+  }
+
+  function mostrarBotonesTareasTabs(key,modal)
+  {
+    /*
+    var limit = 5;
+    $.ajax({
+      type: "POST",
+      url: "/formularioIntel.mostrarBotonesListaTareas",
+      data: {
+        'limit': limit,
+        'key': key,
+        'idDeporte': '<eBD:OUT VALUE="$idDeporte" />',
+        'idCategoria': '<eBD:OUT VALUE="$idCategoria" />',
+        'idEquipo': '<eBD:OUT VALUE="$idEquipo" />',
+        'idElementoDeporte': '<eBD:OUT VALUE="$idElementoDisciplina" />',
+        'idElementoCategorias': '<eBD:OUT VALUE="$idElementoCategorias" />',
+        'idElementoEquipos': '<eBD:OUT VALUE="$idElementoEquipos" />',
+        'idCliente': '<eBD:OUT VALUE="$idCliente" />',
+        'idSubCliente': '<eBD:OUT VALUE="$idSubCliente" />',
+        'idUsuario': '<eBD:OUT VALUE="$idUsuario" />',
+        'func':'TareasTabs',
+        'modal':modal
+      },
+      success: function (res) {
+        $('.botonesTabs'+modal).each(function() {
+            $('#'+this.id).html(res);
+        });
+      }
+    });*/
+  }
+
+  function cargarListaTareasTabs(limit, offset, key,modal)
+  {/*
+    $.ajax({
+      type: "POST",
+      url: "/formularioIntel.mostrarListadoTareas",
+      data: {
+        'limit': limit,
+        'offset': offset,
+        'key': key,
+        'idDeporte': '<eBD:OUT VALUE="$idDeporte" />',
+        'idCategoria': '<eBD:OUT VALUE="$idCategoria" />',
+        'idEquipo': '<eBD:OUT VALUE="$idEquipo" />',
+        'idElementoDeporte': '<eBD:OUT VALUE="$idElementoDisciplina" />',
+        'idElementoCategorias': '<eBD:OUT VALUE="$idElementoCategorias" />',
+        'idElementoEquipos': '<eBD:OUT VALUE="$idElementoEquipos" />',
+        'idCliente': '<eBD:OUT VALUE="$idCliente" />',
+        'idSubCliente': '<eBD:OUT VALUE="$idSubCliente" />',
+        'class':'no',
+        'idUsuario': '<eBD:OUT VALUE="$idUsuario" />',
+        'lateral':'S'
+
+      },
+      success: function (res) {
+        $('.listaTareasTab'+modal).each(function() {
+            $('#'+this.id).html(res);
+        });
+      }
+    });*/
+  }
+
+  function cambiarTabSesion(modal) {
+    mostrarBotonesTareasTabs('',modal);
+    cargarListaTareasTabs(5, 0,'',modal);
+  }
+
+  $('#modalInfoTareas').on('show.bs.modal', function(e) {
+    $('#tituloCosaModalTa').html('');
+    $('#modalBodyInfoTareas').html('');
+    var idTarea = $(e.relatedTarget).data('id');
+    $.ajax({
+      type: "POST",
+      url: "/formularioIntel.mostrarLateralTarea",
+      data: {
+        'idTarea': idTarea,
+        'offset': 0,
+        'idElementoDeporte': '<eBD:OUT VALUE="$idElementoDisciplina" />',
+        'idElementoCategorias': '<eBD:OUT VALUE="$idElementoCategorias" />',
+        'idElementoEquipos': '<eBD:OUT VALUE="$idElementoEquipos" />',
+        'idCliente': '<eBD:OUT VALUE="$idCliente" />',
+        'idSubCliente': '<eBD:OUT VALUE="$idSubCliente" />',
+        'tipo': 'modal',
+        'botonll': 'N'
+      },
+      success: function (res) {
+        $('#modalBodyInfoTareas').html(res);
+        mostrarTituloModalTa(idTarea);
+      }
+    });
+
+  });
+  function mostrarTituloModalTa(idTarea) {
+    $.ajax({
+      type: "POST",
+      url: "/formularioIntel.mostrarTituloTarea",
+      data: {
+        'idTarea': idTarea
+      },
+      success: function (res) {
+        $('#tituloCosaModalTa').html('<b>'+res+'</b>');
+      }
+    });
+  }
+    //Inicio Código Ernesto
+  $('#modal_loading_pdf').on('show.bs.modal', function(e){
+    var idSesion = $(e.relatedTarget).data('id');
+    console.log('idSesion: ' + idSesion);
+
+    $.ajax({
+      type: "POST",
+      url: "/formularioIntel.testER",
+      data: {
+        'idSesion': idSesion,
+        'offset': 0,
+        'idElementoDeporte': '<eBD:OUT VALUE="$idElementoDisciplina" />',
+        'idElementoCategorias': '<eBD:OUT VALUE="$idElementoCategorias" />',
+        'idElementoEquipos': '<eBD:OUT VALUE="$idElementoEquipos" />',
+        'idCliente': '<eBD:OUT VALUE="$idCliente" />',
+        'idSubCliente': '<eBD:OUT VALUE="$idSubCliente" />'
+      },
+      beforeSend: function(){
+        $("#modal_loading_pdf").modal({
+          backdrop: 'static',
+          keyboard: false
+        });
+      },
+      success: function(res) {
+
+        var doc = new jsPDF('p', 'mm', 'a4', true);
+        var pagActual = 0;
+
+        doc.page = 1;
+
+        var titulo_sesion_etiqueta ='';
+        var titulo_sesion_valor = '';
+        for(var [key, value] of Object.entries(res[1])) {
+            if(key == 'etiqueta'){
+              titulo_sesion_etiqueta = value;
+            }else if(key == 'valor'){
+              titulo_sesion_valor = value;
+            }
+        }
+        var duracion_etiqueta ='';
+        var duracion_valor = '';
+        for(var [key, value] of Object.entries(res[3])) {//res[2] corresponde al campo fecha
+            if(key == 'etiqueta'){
+              duracion_etiqueta = value;
+            }else if(key == 'valor'){
+              duracion_valor = value;
+            }
+        }
+        var min_jugadores_etiqueta ='';
+        var min_jugadores_valor = '';
+        for(var [key, value] of Object.entries(res[4])) {
+            if(key == 'etiqueta'){
+              min_jugadores_etiqueta = value;
+            }else if(key == 'valor'){
+              min_jugadores_valor = value;
+            }
+        }
+        var material_etiqueta ='';
+        var material_valor = '';
+        for(var [key, value] of Object.entries(res[5])) {
+            if(key == 'etiqueta'){
+              material_etiqueta = value;
+            }else if(key == 'valor'){
+              material_valor = value;
+            }
+        }
+        var objetivos_etiqueta ='';
+        var objetivos_valor = '';
+        for(var [key, value] of Object.entries(res[6])) {
+            if(key == 'etiqueta'){
+              objetivos_etiqueta = value;
+            }else if(key == 'valor'){
+              objetivos_valor = value;
+            }
+        }
+        var observaciones_etiqueta ='';
+        var observaciones_valor = '';
+        for(var [key, value] of Object.entries(res[7])) {
+            if(key == 'etiqueta'){
+              observaciones_etiqueta = value;
+            }else if(key == 'valor'){
+              observaciones_valor = value;
+            }
+        }
+        var cabecera_y_pie = function (data){
+          if(pagActual < doc.internal.getNumberOfPages()){
+            doc.setFontSize(10);
+
+            // CABECERA
+
+
+            pagActual = doc.internal.getNumberOfPages();
+          }
+        }
+
+        doc.autoTable({
+          startY: 35,
+          margin: {top: 25},
+          head: [
+            [{content: 'SESIÓN', colSpan: 4, styles: {halign: 'center', fillColor: [215, 55, 27], lineColor: [73, 138, 159], lineWidth: 0.2,  textColor:[255, 255, 255], fontStyle: 'bold'}}]//https://convertingcolors.com
+          ],
+          body: [
+            [
+              {content: titulo_sesion_etiqueta, colSpan: 1, styles: {valign: 'middle', fillColor: [244, 247, 249], fontStyle: 'bold', cellWidth: 30}},
+              {content: titulo_sesion_valor, colSpan: 3, styles: {valign: 'middle'}}
+            ],
+            [
+              {content: objetivos_etiqueta, colSpan: 1,  styles: {valign: 'middle', fillColor: [244, 247, 249], fontStyle: 'bold',  cellWidth: 30}},
+              {content: objetivos_valor, colSpan: 3, styles: {valign: 'middle'}}
+            ],
+            [
+              {content: duracion_etiqueta, styles: {halign: 'center', valign: 'middle', fillColor: [244, 247, 249], fontStyle: 'bold'}},
+              {content: duracion_valor, styles: {halign: 'center', valign: 'middle'}},
+              {content: min_jugadores_etiqueta, styles: {halign: 'center', valign: 'middle', fillColor: [244, 247, 249], fontStyle: 'bold'}},
+              {content: min_jugadores_valor, styles: {halign: 'center', valign: 'middle'}}
+            ],
+            [
+              {content: material_etiqueta, colSpan: 4, styles: {halign: 'center', valign: 'middle', fillColor: [244, 247, 249], fontStyle: 'bold'}}
+            ],
+            [
+              {content: material_valor, colSpan: 4, styles: {valign: 'middle'}}
+            ],
+            [
+              {content: 'DESCRIPCIÓN GRÁFICA',  colSpan: 4, styles: {halign: 'center', valign: 'middle', minCellHeight:10, fillColor: [215, 55, 27], textColor:[255, 255, 255], fontStyle: 'bold'}}
+            ],
+            [
+              {content: '',  colSpan: 4}
+            ],
+            [
+              {content: observaciones_etiqueta, colSpan: 4, styles: {halign: 'center', valign: 'middle', minCellHeight:10, fillColor: [215, 55, 27], textColor:[255, 255, 255], fontStyle: 'bold', lineWidth:0}}
+            ],
+            [
+              {content: observaciones_valor,  colSpan: 4}
+            ]
+          ],
+          bodyStyles: {
+            lineWidth: 0.2,
+            lineColor: [0, 0, 0]
+          },
+          tableLineColor: [0, 0, 0],
+          tableLineWidth: 0.3,
+          didParseCell: function(data){
+            if(data.section === 'body' && data.row.index === 6 && data.column.index === 0){
+              data.cell.styles.minCellHeight = 80;
+            }
+          },
+          didDrawCell: function(data){
+            if(data.section === 'body' && data.row.index === 6 && data.column.index === 0){
+              if(res[0].imgPpalSesion){
+                var pizarra_base64 = "data:image/jpeg;base64,"+res[0].imgPpalSesion;
+                doc.addImage(pizarra_base64, 'JPEG', data.cell.x + 35, data.cell.y + 7.5, 110, 65);
+              }
+            }
+          },
+          theme: 'plain',
+          didDrawPage: cabecera_y_pie,
+          pageBreak: 'auto',
+          rowPageBreak: 'avoid',
+          showHead: 'firstPage'
+        });
+
+        //Calentamiento
+        var primera_tabla = doc.lastAutoTable.finalY;
+        var body_table = new Array();
+        let row_pizarra, row_height, global_index;
+        var hay_imagen;
+        var param_pageBreak_Calentamiento = 'always';
+
+
+        var observacionesCalentamiento_etiqueta ='';
+        var observacionesCalentamiento_valor = '';
+        for(var [key, value] of Object.entries(res[8][0])) {
+            if(key == 'etiqueta'){
+              observacionesCalentamiento_etiqueta = value;
+            }else if(key == 'valor'){
+              observacionesCalentamiento_valor = value;
+            }
+        }
+        if(observacionesCalentamiento_valor != ''){
+          row_pizarra = 6;
+          row_height = 6;
+          body_table.push(
+            [
+              {content: 'CALENTAMIENTO', colSpan: 5, styles:{fillColor: [215, 55, 27], textColor:[255, 255, 255], fontStyle: 'bold', halign: 'center', valign: 'middle'}}
+            ],
+            [
+              {content: observacionesCalentamiento_etiqueta, colSpan: 3, styles: {valign: 'middle', fillColor: [244, 247, 249], fontStyle: 'bold', cellWidth: 30}},
+              {content: observacionesCalentamiento_valor, colSpan: 2, styles: {valign: 'middle'}}
+            ]
+          )
+        }
+        if(res[9]!=''){
+
+
+          global_index = 0;
+
+          if(observacionesCalentamiento_valor == ''){
+          row_pizarra = 5;
+          row_height = 5;
+            body_table.push(
+              [
+                {content: 'CALENTAMIENTO', colSpan: 5, styles:{fillColor: [215, 55, 27], textColor:[255, 255, 255], fontStyle: 'bold', halign: 'center', valign: 'middle'}}
+              ]
+            )
+          }
+          body_table.push(
+            [
+              {content: 'TAREAS', colSpan: 5, styles:{fillColor: [215, 55, 27], textColor:[255, 255, 255], fontStyle: 'bold', halign: 'center', valign: 'middle'}}
+            ]
+          )
+          var nroTareas = res[9].length;
+          for(let i=0; i < nroTareas; i++ ){
+
+            //acomodamos la fila de la imagen...
+            if(i>=1){
+              row_pizarra = 3;
+              row_height = 3;
+            }
+
+            body_table.push(
+              [
+                {content: 'Título', colSpan: 3, styles: {valign: 'middle', fillColor: [244, 247, 249], fontStyle: 'bold', cellWidth: 30}},
+                {content: (res[9][i]).tituloTarea, colSpan: 2, styles: {valign: 'middle'}}
+              ],
+              [
+                {content: 'Etrategia', colSpan: 3, styles: {valign: 'middle', fillColor: [244, 247, 249], fontStyle: 'bold', cellWidth: 30}},
+                {content: (res[9][i]).estrategiaTarea, colSpan: 2, styles: {valign: 'middle'}}
+              ]
+            )
+            if(res[9][i].imgTarea){
+              //Si no hay imágen de tarea entonces eliminamos estas filas de la tabla
+              body_table.push(
+                [
+                  {content: 'DESCRIPCIÓN GRÁFICA',  colSpan: 5, styles: {halign: 'center', valign: 'middle', minCellHeight:10, fillColor: [215, 55, 27], textColor:[255, 255, 255], fontStyle: 'bold'}}
+                ],
+                [
+                  {content: '',  colSpan: 5}
+                ],
+                [
+                  {content: '', colSpan: 5, styles: {valign: 'middle', fillColor: [244, 247, 249], fontStyle: 'bold', cellWidth: 30}}
+                ]
+              )
+            }else{
+              body_table.push(
+                [
+                  {content: '', colSpan: 5, styles: {valign: 'middle', fillColor: [244, 247, 249], fontStyle: 'bold', cellWidth: 30}}
+                ]
+              )
+            }
+          }
+        }else{
+          //si no tiene tareas asignadas no se hace el salto de página. modificamos el parámetro de pageBreak:
+          param_pageBreak_Calentamiento = 'avoid';
+        }
+
+        //Tabla Calentamiento
+        doc.autoTable({
+
+          theme: 'plain',
+          body: body_table,
+          bodyStyles: {
+            lineWidth: 0.2,
+            lineColor: [0, 0, 0]
+          },
+          didParseCell: function(data){
+            if(data.section === 'body' && data.row.index === row_height && data.column.index === 0){
+              if(res[9][global_index].imgTarea){
+                data.cell.styles.minCellHeight = 80;
+              }
+              row_height = row_height + row_height;
+            }
+          },
+          didDrawCell: function(data){
+            if(data.section === 'body' && data.row.index === row_pizarra && data.column.index === 0){
+              if(res[9][global_index].imgTarea){
+                var pizarra_base64 = "data:image/jpeg;base64,"+res[9][global_index].imgTarea;
+                doc.addImage(pizarra_base64, 'JPEG', data.cell.x + 35, data.cell.y + 7.5, 110, 65);
+              }
+              row_pizarra = row_pizarra + row_pizarra;
+              global_index++;
+            }
+          },
+          pageBreak: 'always',
+          rowPageBreak: 'avoid',
+          //didDrawPage: cabecera_y_pie,
+          margin: {top: 25},
+          startY: primera_tabla + 30
+        });
+
+        //Parte Principal
+        var segunda_tabla = doc.lastAutoTable.finalY;
+        var param_pageBreak_Pprincipal = 'always';
+        var body_table = new Array();
+
+        var observacionesPpal_etiqueta ='';
+        var observacionesPpal_valor = '';
+        for(var [key, value] of Object.entries(res[10][0])) {
+            if(key == 'etiqueta'){
+              observacionesPpal_etiqueta = value;
+            }else if(key == 'valor'){
+              observacionesPpal_valor = value;
+            }
+        }
+        if(observacionesPpal_valor != ''){
+          row_pizarra = 1;
+          row_height = 1;
+          body_table.push(
+            [
+              {content: 'PARTE PRINCIPAL', colSpan: 5, styles:{fillColor: [215, 55, 27], textColor:[255, 255, 255], fontStyle: 'bold', halign: 'center', valign: 'middle'}}
+            ],
+            [
+              {content: observacionesPpal_etiqueta, colSpan: 3, styles: {valign: 'middle', fillColor: [244, 247, 249], fontStyle: 'bold', cellWidth: 30}},
+              {content: observacionesPpal_valor, colSpan: 2, styles: {valign: 'middle'}}
+            ]
+          )
+        }
+        if(res[11]!=''){
+
+          hay_imagen = true;
+          global_index = 0;
+
+          if(observacionesPpal_valor == ''){
+          row_pizarra = 0;
+          row_height = 0;
+            body_table.push(
+              [
+                {content: 'PARTE PRINCIPAL', colSpan: 5, styles:{fillColor: [215, 55, 27], textColor:[255, 255, 255], fontStyle: 'bold', halign: 'center', valign: 'middle'}}
+              ]
+            )
+          }
+          body_table.push(
+            [
+              {content: 'TAREAS', colSpan: 5, styles:{fillColor: [215, 55, 27], textColor:[255, 255, 255], fontStyle: 'bold', halign: 'center', valign: 'middle'}}
+            ]
+          )
+          var sumar_filas;
+          var nroTareas = res[11].length;
+          for(let i=0; i < nroTareas; i++ ){
+
+            body_table.push(
+              [
+                {content: 'Título', colSpan: 3, styles: {valign: 'middle', fillColor: [244, 247, 249], fontStyle: 'bold', cellWidth: 30}},
+                {content: (res[11][i]).tituloTarea, colSpan: 2, styles: {valign: 'middle'}}
+              ],
+              [
+                {content: 'Etrategia', colSpan: 3, styles: {valign: 'middle', fillColor: [244, 247, 249], fontStyle: 'bold', cellWidth: 30}},
+                {content: (res[11][i]).estrategiaTarea, colSpan: 2, styles: {valign: 'middle'}}
+              ]
+            )
+            if(res[11][i].imgTarea){
+              row_pizarra += 5;
+
+              //Si no hay imágen de tarea entonces eliminamos estas filas de la tabla
+              body_table.push(
+                [
+                  {content: 'DESCRIPCIÓN GRÁFICA',  colSpan: 5, styles: {halign: 'center', valign: 'middle', minCellHeight:10, fillColor: [215, 55, 27], textColor:[255, 255, 255], fontStyle: 'bold'}}
+                ],
+                [
+                  {content: '',  colSpan: 5, styles:{minCellHeight:80}}
+                ],
+                [
+                  {content: '', colSpan: 5, styles: {valign: 'middle', fillColor: [244, 247, 249], fontStyle: 'bold', cellWidth: 30}}
+                ]
+              )
+            }else{
+              //sumar_filas = 1;
+              //row_pizarra = row_pizarra - 2;
+              row_pizarra += 3;
+
+              hay_imagen = false;
+              body_table.push(
+                [
+                  {content: '', colSpan: 5, styles: {valign: 'middle', fillColor: [244, 247, 249], fontStyle: 'bold', cellWidth: 30}}
+                ]
+              )
+            }
+          console.log('global_index dsd for tareas: ' + global_index);
+          console.log('row_pizarra: '+ row_pizarra);
+          global_index++;
+        }//
+
+        }else{
+          //si no tiene tareas asignadas no se hace el salto de página. modificamos el parámetro de pageBreak:
+          param_pageBreak_Pprincipal = 'avoid';
+        }
+
+        //Tabla Parte Principal
+        doc.autoTable({
+
+          theme: 'plain',
+          body: body_table,
+          bodyStyles: {
+            lineWidth: 0.2,
+            lineColor: [0, 0, 0]
+          },
+          didParseCell: function(data){
+           /* if(data.section === 'body' && data.row.index === row_height && data.column.index === 0){
+              if(res[11][global_index].imgTarea){
+                data.cell.styles.minCellHeight = 80;
+              }
+              row_height = row_height + row_height;
+            }*/
+          },
+          didDrawCell: function(data){
+            if(data.section === 'body' && data.row.index === row_pizarra && data.column.index === 0){
+              console.log('global_index: '+ global_index);
+
+              // if(res[11]&&res[11][global_index]&&res[11][global_index].imgTarea){
+                for (var i = 0; i < global_index; i++) {
+                  var pizarra_base64;
+                  if (res[11][i]&&res[11][i].imgTarea) {
+                    pizarra_base64 = "data:image/jpeg;base64,"+res[11][i].imgTarea;
+                    doc.addImage(pizarra_base64, 'JPEG', data.cell.x + 35, data.cell.y + 7.5, 110, 65);
+                  }
+                  console.log(pizarra_base64);
+                }
+              // }
+              console.log('row_pizarra: '+ row_pizarra);
+
+              console.log('global_index: '+ global_index);
+
+            }
+          },
+          pageBreak: 'auto',//Si no hay tareas en el calentamtiento, entonces que no haga el salto de página
+          rowPageBreak: 'avoid',
+          //didDrawPage: cabecera_y_pie,
+          margin: {top: 25},
+          startY: segunda_tabla + 30
+        });
+        //**********************
+
+        //Parte Final
+        var tercera_tabla = doc.lastAutoTable.finalY;
+
+        var body_table = new Array();
+
+        var observacionesPFinal_etiqueta ='';
+        var observacionesPFinal_valor = '';
+        for(var [key, value] of Object.entries(res[12][0])) {
+            if(key == 'etiqueta'){
+              observacionesPFinal_etiqueta = value;
+            }else if(key == 'valor'){
+              observacionesPFinal_valor = value;
+            }
+        }
+        if(observacionesPFinal_valor != ''){
+          row_pizarra = 6;
+          row_height = 6;
+          body_table.push(
+            [
+              {content: 'PARTE FINAL', colSpan: 5, styles:{fillColor: [215, 55, 27], textColor:[255, 255, 255], fontStyle: 'bold', halign: 'center', valign: 'middle'}}
+            ],
+            [
+              {content: observacionesPFinal_etiqueta, colSpan: 3, styles: {valign: 'middle', fillColor: [244, 247, 249], fontStyle: 'bold', cellWidth: 30}},
+              {content: observacionesPFinal_valor, colSpan: 2, styles: {valign: 'middle'}}
+            ]
+          )
+        }
+        if(res[13]!=''){
+
+          global_index = 0;
+
+          if(observacionesPpal_valor == ''){
+          row_pizarra = 5;
+          row_height = 5;
+            body_table.push(
+              [
+                {content: 'PARTE FINAL', colSpan: 5, styles:{fillColor: [215, 55, 27], textColor:[255, 255, 255], fontStyle: 'bold', halign: 'center', valign: 'middle'}}
+              ]
+            )
+          }
+          body_table.push(
+            [
+              {content: 'TAREAS', colSpan: 5, styles:{fillColor: [215, 55, 27], textColor:[255, 255, 255], fontStyle: 'bold', halign: 'center', valign: 'middle'}}
+            ]
+          )
+          var nroTareas = res[13].length;
+          for(let i=0; i < nroTareas; i++ ){
+
+            body_table.push(
+              [
+                {content: 'Título', colSpan: 3, styles: {valign: 'middle', fillColor: [244, 247, 249], fontStyle: 'bold', cellWidth: 30}},
+                {content: (res[13][i]).tituloTarea, colSpan: 2, styles: {valign: 'middle'}}
+              ],
+              [
+                {content: 'Etrategia', colSpan: 3, styles: {valign: 'middle', fillColor: [244, 247, 249], fontStyle: 'bold', cellWidth: 30}},
+                {content: (res[13][i]).estrategiaTarea, colSpan: 2, styles: {valign: 'middle'}}
+              ]
+            )
+            if(res[13][i].imgTarea){
+              //acomodamos la fila de la imagen...
+              if(i>=1){
+                row_pizarra -= 1;
+                row_height -= 1;
+              }
+              //Si no hay imágen de tarea entonces eliminamos estas filas de la tabla
+              body_table.push(
+                [
+                  {content: 'DESCRIPCIÓN GRÁFICA',  colSpan: 5, styles: {halign: 'center', valign: 'middle', minCellHeight:10, fillColor: [215, 55, 27], textColor:[255, 255, 255], fontStyle: 'bold'}}
+                ],
+                [
+                  {content: '',  colSpan: 5}
+                ],
+                [
+                  {content: '', colSpan: 5, styles: {valign: 'middle', fillColor: [244, 247, 249], fontStyle: 'bold', cellWidth: 30}}
+                ]
+              )
+            }else{
+              body_table.push(
+                [
+                  {content: '', colSpan: 5, styles: {valign: 'middle', fillColor: [244, 247, 249], fontStyle: 'bold', cellWidth: 30}}
+                ]
+              )
+            }
+          }
+        }
+
+        //Tabla Parte Final
+        doc.autoTable({
+
+          theme: 'plain',
+          body: body_table,
+          bodyStyles: {
+            lineWidth: 0.2,
+            lineColor: [0, 0, 0]
+          },
+          didParseCell: function(data){
+            if(data.section === 'body' && data.row.index === row_height && data.column.index === 0){
+              if(res[13][global_index].imgTarea){
+                data.cell.styles.minCellHeight = 80;
+                row_height = row_height+5;
+              }
+
+            }
+          },
+          didDrawCell: function(data){
+            if(data.section === 'body' && data.row.index === row_pizarra && data.column.index === 0){
+              if(res[13][global_index].imgTarea){
+                var pizarra_base64 = "data:image/jpeg;base64,"+res[13][global_index].imgTarea;
+                doc.addImage(pizarra_base64, 'JPEG', data.cell.x + 35, data.cell.y + 7.5, 110, 65);
+                row_pizarra = row_pizarra+5;
+                global_index++;
+              }
+
+            }
+          },
+          pageBreak: 'auto',
+          rowPageBreak: 'avoid',
+          //didDrawPage: cabecera_y_pie,
+          margin: {top: 25},
+          startY: tercera_tabla +30
+        });
+        //**********************
+        doc.save('titulo'+'.pdf');
+      },
+      complete: function(){
+        $('#modal_loading_pdf').modal('hide');
+      }
+    });
+  });
+  //Fin Código Ernesto
+</script>

@@ -1,0 +1,174 @@
+<eBD:USE LIB="Utilidades"/>
+<eBD:CALL FUNCTION="getCurrentClient" VAR="res" usuario="#usuario"/>
+<eBD:CALL FUNCTION="getUser" VAR="hash_usuario" idUsuario="%idUsuario"/>
+<eBD:CALL FUNCTION="getClient" VAR="hash_cliente" idCliente="%idempresa" idSubcliente="%idSubCliente"/>
+
+
+
+<eBD:ARGS NAME="uidUrl" DEFAULT="" />
+<eBD:ARGS NAME="UIDFav" DEFAULT="" />
+<eBD:ARGS NAME="idUsuario" DEFAULT="" />
+<eBD:ARGS NAME="idCliente" DEFAULT="" />
+<eBD:ARGS NAME="idSubcliente" DEFAULT="" />
+<eBD:ARGS NAME="idProyecto" DEFAULT="" />
+<eBD:ARGS NAME="PlatOrigin" DEFAULT="" />
+<eBD:ARGS NAME="plantillaid" DEFAULT="" />
+<eBD:ARGS NAME="datosFav" DEFAULT="" />
+<eBD:ARGS NAME="json" DEFAULT="" />
+<eBD:ARGS NAME="name" DEFAULT="" />
+<eBD:ARGS NAME="scenaData" DEFAULT="" />
+<eBD:ARGS NAME="observaciones" DEFAULT="" />
+<eBD:ARGS NAME="screenshot" DEFAULT="" />
+<eBD:ARGS NAME="token" DEFAULT="" />
+<eBD:ARGS NAME="token2" DEFAULT="" />
+<eBD:ARGS NAME="type" DEFAULT="" />
+<eBD:ARGS NAME="Notes_BlackBoard" DEFAULT="" />
+
+
+
+
+<eBD:IF EXPR="$token>=1000000000000000 && $token<=9999999999999999">
+<eBD:VAR NAME="restoken2" />
+<eBD:SET  VAR="restoken2" EXPR="#[eBDDate.CurrentMilis]/$token"/>
+<eBD:RETURN VALUE="$restoken2"/>
+<eBD:ELSE>
+
+<eBD:IF EXPR="($token2/2)+60000>#[eBDDate.CurrentMilis] && ($token2/2)<#[eBDDate.CurrentMilis]">
+
+<eBD:IF EXPR="$type== 'create'">
+<eBD:INSERT TABLE="BlackboardDB">
+<eBD:DATAFIELD FIELD="idUsuario" VALUE="$idUsuario"/>
+<eBD:DATAFIELD FIELD="idCliente" VALUE="$idCliente"/>
+<eBD:DATAFIELD FIELD="idSubcliente" VALUE="$idSubCliente"/>
+<eBD:DATAFIELD FIELD="idProyecto" VALUE="$idProyecto"/>
+<eBD:DATAFIELD FIELD="idUsuarioLastEdited" VALUE="$idUsuario"/>
+<eBD:DATAFIELD FIELD="PlatOrigin" VALUE="$PlatOrigin"/>
+
+<eBD:DATAFIELD FIELD="idPlantilla" VALUE="$plantillaid"/>
+<eBD:DATAFIELD FIELD="uidUrl" VALUE="$uidUrl"/>
+<eBD:DATAFIELD FIELD="name" VALUE="$name"/>
+<eBD:DATAFIELD FIELD="json" VALUE="$json"/>
+<eBD:DATAFIELD FIELD="scenaData" VALUE="$scenaData"/>
+<eBD:DATAFIELD FIELD="observaciones" VALUE="$observaciones"/>
+<eBD:DATAFIELD FIELD="screenshot" VALUE="$screenshot"/>
+</eBD:INSERT>
+<eBD:RETURN VALUE="DATOS GUARDADOS CORRECTAMENTE"/>
+</eBD:IF>
+
+<eBD:IF EXPR="$type== 'searchBlackboard'">
+<eBD:VAR NAME="res" TYPE="ARRAY" />
+<eBD:QUERY NAME="datosblackboard" DATASOURCE="principal" >
+Select * from BlackboardDB WHERE uidUrl = '$uidUrl'
+</eBD:QUERY>
+<eBD:FOREACH  QUERY="datosblackboard">
+<eBD:FETCHROW NAME="ID" QUERY="datosblackboard"/>
+<eBD:VAR NAME="hash" TYPE="HASH" />
+<eBD:SET VAR="hash" INDEX="idBlackboard" VALUE="&ID.idBlackboard" />
+<eBD:SET VAR="hash" INDEX="idUsuario" VALUE="&ID.idUsuario" />
+<eBD:SET VAR="hash" INDEX="idCliente" VALUE="&ID.idCliente" />
+<eBD:SET VAR="hash" INDEX="idSubcliente" VALUE="&ID.idSubcliente" />
+<eBD:SET VAR="hash" INDEX="idUsuarioLastEdited" VALUE="&ID.idUsuarioLastEdited" />
+<eBD:SET VAR="hash" INDEX="uidUrl" VALUE="&ID.uidUrl" />
+<eBD:SET VAR="hash" INDEX="name" VALUE="&ID.name" />
+<eBD:SET VAR="hash" INDEX="scenaData" VALUE="&ID.scenaData" />
+<eBD:SET VAR="hash" INDEX="json" VALUE="&ID.json" />
+<eBD:SET VAR="hash" INDEX="observaciones" VALUE="&ID.observaciones" />
+<eBD:SET VAR="hash" INDEX="idPlantilla" VALUE="&ID.idPlantilla" />
+<eBD:SET VAR="hash" INDEX="idProyecto" VALUE="&ID.idProyecto" />
+<eBD:SET VAR="hash" INDEX="archivar" VALUE="&ID.archivar" />
+<eBD:SET VAR="hash" INDEX="Notes_BlackBoard" VALUE="&ID.Notes_BlackBoard" />
+<eBD:PUSH ARRAY="res" VALUE="$hash" />
+</eBD:FOREACH>
+<eBD:SERIALIZE VAR="serialized" VALUE="$res" INTO="JSON"/>
+<eBD:RETURN VALUE="$serialized"/>
+</eBD:IF>
+
+
+
+<eBD:IF EXPR="$type== 'searchFavorites'">
+<eBD:VAR NAME="resFav" TYPE="ARRAY" />
+<eBD:QUERY NAME="datosblackboardFav" DATASOURCE="principal" >
+Select * from BlackboardFavoritos WHERE idUsuario = '$idUsuario' AND idPlantilla = '$plantillaid'
+</eBD:QUERY>
+<eBD:FOREACH  QUERY="datosblackboardFav">
+<eBD:FETCHROW NAME="IDFav" QUERY="datosblackboardFav"/>
+<eBD:VAR NAME="hash" TYPE="HASH" />
+<eBD:SET VAR="hash" INDEX="UIDFav" VALUE="&IDFav.UID" />
+<eBD:SET VAR="hash" INDEX="datosFav" VALUE="&IDFav.datosFav" />
+<eBD:PUSH ARRAY="resFav" VALUE="$hash" />
+</eBD:FOREACH>
+<eBD:SERIALIZE VAR="serializedFav" VALUE="$resFav" INTO="JSON"/>
+<eBD:RETURN VALUE="$serializedFav"/>
+</eBD:IF>
+
+<eBD:IF EXPR="$type== 'createFavorites'">
+<eBD:INSERT TABLE="BlackboardFavoritos">
+<eBD:DATAFIELD FIELD="idUsuario" VALUE="$idUsuario"/>
+<eBD:DATAFIELD FIELD="idPlantilla" VALUE="$plantillaid"/>
+<eBD:DATAFIELD FIELD="datosFav" VALUE="$datosFav"/>
+</eBD:INSERT>
+<eBD:RETURN VALUE="DATOS CREADOS CORRECTAMENTE"/>
+</eBD:IF>
+
+<eBD:IF EXPR="$type== 'updateFavorites'">
+<eBD:UPDATE TABLE="BlackboardFavoritos" IDFIELD="UID" IDVALUE="$UIDFav">
+<eBD:DATAFIELD FIELD="datosFav" VALUE="$datosFav"/>
+</eBD:UPDATE>
+<eBD:RETURN VALUE="ACTUALIZADO CORRECTAMENTE FAVORITOS"/>
+</eBD:IF>
+
+
+<eBD:IF EXPR="$type== 'searchGallery'">
+<eBD:VAR NAME="res2" TYPE="ARRAY" />
+
+  <eBD:QUERY NAME="datosblackboard2" DATASOURCE="principal" >
+  Select * from BlackboardDB WHERE idUsuario = '%idUsuario'
+  </eBD:QUERY>
+
+<eBD:FOREACH  QUERY="datosblackboard2">
+<eBD:FETCHROW NAME="ID2" QUERY="datosblackboard2"/>
+<eBD:VAR NAME="hash2" TYPE="HASH" />
+
+<eBD:SET VAR="hash2" INDEX="idBlackboard" VALUE="&ID2.idBlackboard" />
+<eBD:SET VAR="hash2" INDEX="idUsuario" VALUE="&ID2.idUsuario" />
+<eBD:SET VAR="hash2" INDEX="idCliente" VALUE="&ID2.idCliente" />
+<eBD:SET VAR="hash2" INDEX="idSubcliente" VALUE="&ID2.idSubcliente" />
+<eBD:SET VAR="hash2" INDEX="idUsuarioLastEdited" VALUE="&ID2.idUsuarioLastEdited" />
+<eBD:SET VAR="hash2" INDEX="uidUrl" VALUE="&ID2.uidUrl" />
+<eBD:SET VAR="hash2" INDEX="name" VALUE="&ID2.name" />
+<eBD:SET VAR="hash2" INDEX="scenaData" VALUE="&ID2.scenaData" />
+<eBD:SET VAR="hash2" INDEX="observaciones" VALUE="&ID2.observaciones" />
+<eBD:SET VAR="hash2" INDEX="screenshot" VALUE="&ID2.screenshot" />
+
+
+<eBD:PUSH ARRAY="res2" VALUE="$hash2" />
+</eBD:FOREACH>
+<eBD:SERIALIZE VAR="serialized2" VALUE="$res2" INTO="JSON"/>
+<eBD:RETURN VALUE="$serialized2"/>
+</eBD:IF>
+
+<eBD:IF EXPR="$type== 'delete'">
+<eBD:DELETE TABLE="BlackboardDB" IDFIELD="idBlackboard" IDVALUE="$idBlackboard" />
+<eBD:RETURN VALUE="BORRADO CORRECTAMENTE"/>
+</eBD:IF>
+
+<eBD:IF EXPR="$type== 'update'">
+<eBD:UPDATE TABLE="BlackboardDB" IDFIELD="uidUrl" IDVALUE="$uidUrl">
+<eBD:DATAFIELD FIELD="name" VALUE="$name" />
+<eBD:DATAFIELD FIELD="observaciones" VALUE="$observaciones" />
+<eBD:DATAFIELD FIELD="scenaData" VALUE="$scenaData" />
+<eBD:DATAFIELD FIELD="Notes_BlackBoard" VALUE="$Notes_BlackBoard" />
+<eBD:DATAFIELD FIELD="json" VALUE="$json" />
+<eBD:DATAFIELD FIELD="screenshot" VALUE="$screenshot" />
+</eBD:UPDATE>
+<eBD:RETURN VALUE="ACTUALIZADO CORRECTAMENTE"/>
+</eBD:IF>
+
+<eBD:ELSE>
+<eBD:RETURN VALUE="TOKEN INCORRECTO 2 "/>
+</eBD:ELSE>
+</eBD:IF>
+
+<eBD:RETURN VALUE="TOKEN INCORRECTO"/>
+</eBD:ELSE>
+</eBD:IF>

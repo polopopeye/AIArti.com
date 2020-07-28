@@ -1,0 +1,111 @@
+<eBD:ARGS NAME="datos" DEFAULT="" />
+<eBD:ARGS NAME="Blackboard_Name" DEFAULT="" />
+<eBD:ARGS NAME="Blackboard_ClientID" DEFAULT="" />
+<eBD:ARGS NAME="Blackboard_UID" DEFAULT="" />
+<eBD:ARGS NAME="Blackboard_Scena_data" DEFAULT="" />
+<eBD:ARGS NAME="token" DEFAULT="" />
+<eBD:ARGS NAME="token2" DEFAULT="" />
+<eBD:ARGS NAME="type" DEFAULT="" />
+<eBD:ARGS NAME="Blackboard_Comments" DEFAULT="" />
+<eBD:ARGS NAME="Blackboard_Screenshot" DEFAULT="" />
+
+
+<eBD:IF EXPR="$token>=1000000000000000 && $token<=9999999999999999">
+<eBD:VAR NAME="restoken2" />
+<eBD:SET  VAR="restoken2" EXPR="#[eBDDate.CurrentMilis]/$token"/>
+<eBD:RETURN VALUE="$restoken2"/>
+<eBD:ELSE>
+
+<eBD:IF EXPR="($token2/2)+60000>#[eBDDate.CurrentMilis] && ($token2/2)<#[eBDDate.CurrentMilis]">
+ 
+<eBD:IF EXPR="$type== 'create'">
+<eBD:INSERT TABLE="BlackboardDB">
+<eBD:DATAFIELD FIELD="Blackboard_ClientID" VALUE="#[eBDUser.Username]"/>
+<eBD:DATAFIELD FIELD="Blackboard_LastEdited" VALUE="$Blackboard_ClientID"/>
+<eBD:DATAFIELD FIELD="Blackboard_UID_URL" VALUE="$Blackboard_UID"/>
+<eBD:DATAFIELD FIELD="Blackboard_Name" VALUE="$Blackboard_Name"/>
+<eBD:DATAFIELD FIELD="Blackboard_Created" VALUE="#hoy #ahora"/>
+<eBD:DATAFIELD FIELD="Blackboard_Modified" VALUE="#hoy #ahora"/>
+<eBD:DATAFIELD FIELD="Blackboard_Data" VALUE="$datos"/>
+<eBD:DATAFIELD FIELD="Blackboard_Scena_data" VALUE="$Blackboard_Scena_data"/>
+<eBD:DATAFIELD FIELD="Blackboard_Comments" VALUE="$Blackboard_Comments"/>
+<eBD:DATAFIELD FIELD="Blackboard_Screenshot" VALUE="$Blackboard_Screenshot"/>
+</eBD:INSERT>
+<eBD:RETURN VALUE="DATOS GUARDADOS CORRECTAMENTE"/>
+</eBD:IF>
+
+<eBD:IF EXPR="$type== 'searchBlackboard'">
+<eBD:VAR NAME="res" TYPE="ARRAY" />
+<eBD:QUERY NAME="datosblackboard" DATASOURCE="principal" >
+Select * from BlackboardDB WHERE Blackboard_UID_URL = '$Blackboard_UID'
+</eBD:QUERY>
+<eBD:FOREACH  QUERY="datosblackboard">
+<eBD:FETCHROW NAME="ID" QUERY="datosblackboard"/>
+<eBD:VAR NAME="hash" TYPE="HASH" />
+<eBD:SET VAR="hash" INDEX="UID" VALUE="&ID.UID" />
+<eBD:SET VAR="hash" INDEX="Blackboard_ClientID" VALUE="&ID.Blackboard_ClientID" />
+<eBD:SET VAR="hash" INDEX="Blackboard_UID_URL" VALUE="&ID.Blackboard_UID_URL" />
+<eBD:SET VAR="hash" INDEX="Blackboard_Name" VALUE="&ID.Blackboard_Name" />
+<eBD:SET VAR="hash" INDEX="Blackboard_Created" VALUE="&ID.Blackboard_Created" />
+<eBD:SET VAR="hash" INDEX="Blackboard_Data" VALUE="&ID.Blackboard_Data" />
+<eBD:SET VAR="hash" INDEX="Blackboard_Scena_Data" VALUE="&ID.Blackboard_Scena_data" />
+<eBD:SET VAR="hash" INDEX="Blackboard_LastEdited" VALUE="&ID.Blackboard_LastEdited" />
+<eBD:SET VAR="hash" INDEX="Blackboard_Comments" VALUE="&ID.Blackboard_Comments" />
+<eBD:SET VAR="hash" INDEX="Blackboard_Modified" VALUE="&ID.Blackboard_Modified" />
+<eBD:PUSH ARRAY="res" VALUE="$hash" />
+</eBD:FOREACH>
+<eBD:SERIALIZE VAR="serialized" VALUE="$res" INTO="JSON"/>
+<eBD:RETURN VALUE="$serialized"/>
+</eBD:IF>
+
+<eBD:IF EXPR="$type== 'searchGallery'">
+<eBD:VAR NAME="res2" TYPE="ARRAY" />
+<eBD:DOC>
+  <eBD:QUERY NAME="datosblackboard2" DATASOURCE="principal" >
+  Select * from BlackboardDB WHERE Blackboard_ClientID = '#[eBDUser.Username]'
+  </eBD:QUERY>
+</eBD:DOC>
+  <eBD:QUERY NAME="datosblackboard2" DATASOURCE="principal" >
+    Select * from BlackboardDB
+  </eBD:QUERY>
+<eBD:FOREACH  QUERY="datosblackboard2">
+<eBD:FETCHROW NAME="ID2" QUERY="datosblackboard2"/>
+<eBD:VAR NAME="hash2" TYPE="HASH" />
+<eBD:SET VAR="hash2" INDEX="UID" VALUE="&ID2.UID" />
+<eBD:SET VAR="hash2" INDEX="Blackboard_ClientID" VALUE="&ID2.Blackboard_ClientID" />
+<eBD:SET VAR="hash2" INDEX="Blackboard_LastEdited" VALUE="&ID2.Blackboard_LastEdited" />
+<eBD:SET VAR="hash2" INDEX="Blackboard_UID_URL" VALUE="&ID2.Blackboard_UID_URL" />
+<eBD:SET VAR="hash2" INDEX="Blackboard_Name" VALUE="&ID2.Blackboard_Name" />
+<eBD:SET VAR="hash2" INDEX="Blackboard_Comments" VALUE="&ID2.Blackboard_Comments" />
+<eBD:SET VAR="hash2" INDEX="Blackboard_Created" VALUE="&ID2.Blackboard_Created" />
+<eBD:SET VAR="hash2" INDEX="Blackboard_Modified" VALUE="&ID2.Blackboard_Modified" />
+<eBD:SET VAR="hash2" INDEX="Blackboard_Data" VALUE="&ID2.Blackboard_Data" />
+<eBD:SET VAR="hash2" INDEX="Blackboard_Scena_Data" VALUE="&ID2.Blackboard_Scena_data" />
+<eBD:SET VAR="hash2" INDEX="Blackboard_Screenshot" VALUE="&ID2.Blackboard_Screenshot" />
+
+<eBD:PUSH ARRAY="res2" VALUE="$hash2" />
+</eBD:FOREACH>
+<eBD:SERIALIZE VAR="serialized2" VALUE="$res2" INTO="JSON"/>
+<eBD:RETURN VALUE="$serialized2"/>
+</eBD:IF>
+
+<eBD:IF EXPR="$type== 'delete'">
+<eBD:DELETE TABLE="BlackboardDB" IDFIELD="Blackboard_UID_URL" IDVALUE="$Blackboard_UID" />
+<eBD:RETURN VALUE="BORRADO CORRECTAMENTE"/>
+</eBD:IF>
+
+<eBD:IF EXPR="$type== 'update'">
+<eBD:UPDATE TABLE="BlackboardDB" IDFIELD="Blackboard_UID_URL" IDVALUE="$Blackboard_UID">
+<eBD:DATAFIELD FIELD="$UpdateField" VALUE="$UpdateValue" />
+</eBD:UPDATE>
+<eBD:RETURN VALUE="ACTUALIZADO CORRECTAMENTE"/>
+</eBD:IF>
+
+<eBD:ELSE>
+<eBD:RETURN VALUE="TOKEN INCORRECTO 2 "/>
+</eBD:ELSE>
+</eBD:IF>
+
+<eBD:RETURN VALUE="TOKEN INCORRECTO"/>
+</eBD:ELSE>
+</eBD:IF>
