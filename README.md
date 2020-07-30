@@ -1,5 +1,8 @@
 # ARTI AI
 
+node node_modules/cors-anywhere/server.js Crear servidor proxy en local
+node servidor.js ejecutar servidor principal
+
 ## MOTOR DE AI
 
 Primero obtiene los titulos, existen varios modelos para obtener titulos

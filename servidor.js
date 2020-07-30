@@ -5,7 +5,8 @@ var http = require('http'),
     ifaces = os.networkInterfaces(),
     engine = require('ejs-mate'),
     fs = require('fs'),
-    mongoose = require('mongoose');
+    mongoose = require('mongoose'),
+    WhichX = require("whichx");
 
 var app=express();
 app.use(express.static('assets'));
@@ -19,6 +20,9 @@ app.set('view engine', 'ejs');
 // app.get("/",function(req,res){
 // res.render('ejs/index.ejs');
 // });
+
+
+
 app.get("/MotorEngineStart",function(req,res){
 res.render('ejs/ArtiMotor/MotorEngineStart.ejs');
 });
