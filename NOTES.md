@@ -29,3 +29,6 @@ axios1Query.append('token', randomNum);
 //      document.getElementById("isSavingInProgressBlackboard").style.display="none";
 //    }
 // });
+
+
+Luego crear nueva etiqueta y añadir el input como lavel y añadir el texto como info a ese label. 
