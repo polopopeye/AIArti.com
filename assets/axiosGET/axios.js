@@ -50,6 +50,20 @@ $("#TopMenuSelect").html(`
         <option value="" >NO</option>
       </select>
     </div>
+    <div class="col">
+      <span>IDIOMA</span>
+      <select id="langSelect">
+        <option value="en" selected>en</option>
+        <option value="es" >es</option>
+      </select>
+    </div>
+    <div class="col">
+      <span>Location</span>
+      <select id="locSelect">
+        <option value="mx" selected>mx</option>
+        <option value="ve" >co</option>
+      </select>
+    </div>
   </div>
   <div class="row">
   <a id="selectNewSourceButton" class="btn btn-lg btn-primary">Inteligencia!</a>
@@ -61,13 +75,12 @@ $("#TopMenuSelect").html(`
 // );
 $('#selectNewSourceButton').on('click', function() {
    // alert( this.value );
-   if (whichTittle.addLabels(newsQueryToSearch)) {
-     console.log(newsQueryToSearch+" Añadido con exito");
-   }else{
-     console.log("ERROR con"+newsQueryToSearch);
-
-   }
-  ;
+   // if (whichTittle.addLabels(newsQueryToSearch)) {
+   //   console.log(newsQueryToSearch+" Añadido con exito");
+   // }else{
+   //   console.log("ERROR con"+newsQueryToSearch);
+   //
+   // }
    axiosQuery($("#selectNewSource")[0].value,el1,"h3","h4")
    getBetterTittleInterval();
 
@@ -78,13 +91,17 @@ $('#selectNewSourceButton').on('click', function() {
 
     newsQueryToSearch=$("#newsQueryToSearch")[0].value;
     var urltoUpdate=proxyScrap[0]+"/https://news.google.com/search?q="+newsQueryToSearch+"&hl=es-419&gl=EN&:es-419&ceid=EN:es-419";
+    // var urltoUpdate=proxyScrap[0]+"/https://news.google.com/search?q="+newsQueryToSearch+"&hl=en-US&gl=US&ceid=US:en";
+
+
     SourceTittle[0].url=urltoUpdate;
-setTimeout(reloadList(),1000);
+setTimeout(reloadList(),100);
 
 
     });
 
 
+    var o=0;
 
 
 
@@ -108,13 +125,18 @@ function reloadList(){
 };
 reloadList();
 
+
 var el1 = $( '<div></div>' );
 
 var h3Tittle,h4Tittle;
 // All the anchor elements
 //h3, h4
 var tittlesLength;
+var newsLoaded=false;
+var arrayNotes=[];
 function axiosQuery(url,el,select1,select2,select3){
+arrayNotes=[];
+  newsLoaded=false;
   document.getElementById("infoPage").innerHTML="";
   var axiosparams=new URLSearchParams();
   // axiosparams.append('hl', "es-419");
@@ -142,8 +164,17 @@ function axiosQuery(url,el,select1,select2,select3){
         </div>
         `;
         // setTimeout();ç
-        whichTittle.addData(newsQueryToSearch, select1R[i].innerText);
-        getTitleNote(select1R[i].innerText,"#"+i+"-note-"+select1,i,"-note-"+select1);
+        // whichTittle.addData(newsQueryToSearch, select1R[i].innerText);
+        AddNewDataTextClassify(select1R[i].innerText,newsQueryToSearch)
+// execute every 10 sec by now
+
+arrayNotes=[...arrayNotes,{
+  id1:select1R[i].innerText,
+  id2:"#"+i+"-note-"+select1,
+  id3:i,
+  id4:"-note-"+select1
+}];
+        // getTitleNote(select1R[i].innerText,"#"+i+"-note-"+select1,i,"-note-"+select1);
       }
     }
     if (select2) {
@@ -161,9 +192,15 @@ function axiosQuery(url,el,select1,select2,select3){
 
         </div>
         `;
-        whichTittle.addData(newsQueryToSearch,select2R[i].innerText);
-
-        getTitleNote(select2R[i].innerText,"#"+i+"-note-"+select2,i,"-note-"+select2);
+        AddNewDataTextClassify(select2R[i].innerText,newsQueryToSearch)
+        // whichTittle.addData(newsQueryToSearch,select2R[i].innerText);
+        arrayNotes=[...arrayNotes,{
+          id1:select2R[i].innerText,
+          id2:"#"+i+"-note-"+select2,
+          id3:i,
+          id4:"-note-"+select2
+        }];
+        // getTitleNote(select2R[i].innerText,"#"+i+"-note-"+select2,i,"-note-"+select2);
 
       }
     tittlesLength=select1R.length+select2R.length;
@@ -175,7 +212,25 @@ function axiosQuery(url,el,select1,select2,select3){
     //   }
     // }
     // console.log(response.data);
+    o=0;
+
+    setTimeout(function(){
+    loadNotes();
+    },1000);
   });
+
+
+}
+function loadNotes(){
+if (o<arrayNotes.length&&arrayNotes[o]) {
+  getTitleNote(arrayNotes[o].id1,arrayNotes[o].id2,arrayNotes[o].id3,arrayNotes[o].id4);
+setTimeout(function(){
+o++;
+loadNotes();
+},600);
+}else{
+  console.log("TERMINADO EN"+o);
+}
 }
 
 var notesArray=[];
@@ -198,6 +253,10 @@ function getBetterTittle(){
     $("#betterTittle").html(largestTittle);
     console.log(largestNote);
 console.log(largestTittle);
+setTimeout(function(){
+  newsLoaded=true;
+
+},500);
 }
 
 
@@ -210,8 +269,17 @@ function getTitleNote(titulo,id,n,div){
   var result = $( '<div></div>' );
 
 
-    var urlNote=proxyScrap[0]+"/https://www.google.com/search?q="+titulo;
+  // var urlNote=proxyScrap[0]+"/https://www.google.com/search?q="+encodeURIComponent(titulo);
 
+  var urlNote=proxyScrap[0]+"/https://www.bing.com/search?q=prueba"+encodeURIComponent(titulo);
+// b_tween
+// sb_count
+ // var urlNote=proxyScrap[0]+"/https://www.google.com/search?q="+encodeURIComponent(titulo);
+
+ // result-count id a buscar
+// var urlNote=proxyScrap[0]+"/https://www.google.com/search?q="+encodeURIComponent(titulo)+"&rlz=1C1CHBF_esES884ES884&oq=hjghjg&aqs=chrome..69i57j0l7.535j0j4&sourceid=chrome&ie=UTF-8";
+
+// var urlNote=proxyScrap[0]+"/https://www.google.es/search?sxsrf=ALeKk01hzg_4pEWFL7S0V_-ud-KKsaXwTw%3A1596989532450&ei=XCAwX6n8GtHbgwfd7YrgDw&q="+encodeURIComponent(titulo)+"&oq="+encodeURIComponent(titulo)+"&gs_lcp=ChNtb2JpbGUtZ3dzLXdpei1zZXJwEAMyBAgjECcyBAgjECcyBQgAELEDMggILhCxAxCDATIFCAAQsQMyBQgAELEDMgUIABCxAzIFCAAQsQM6BAgAEEc6BwgjELACECc6BAguEA06BAgAEA06BAgAEAo6AggAOgIILjoFCC4QsQM6CAgAELEDEIMBOgcIABAUEIcCOgcIIxDqAhAnOgkIIxDqAhAnEBM6BggjECcQE1CfRFiWUWCeVmgBcAF4AIABV4gByAaSAQIxMpgBAKABAbABD8ABAQ&sclient=mobile-gws-wiz-serp";
     var axiosparams=new URLSearchParams();
 
     axios({
@@ -219,28 +287,34 @@ function getTitleNote(titulo,id,n,div){
       url: urlNote,
       data: axiosparams
     }).then(function(response){
-    result.html(response.data);
-     resultStatsGET=$("#result-stats", result);
-     resultStats2 = resultStatsGET[0].innerText.match(/Aproximadamente(.*.)resultados/);
- resultStats= parseInt(resultStats2[1].replace(".", ""));
- // console.log($(id));
- $(id).html(resultStats);
- // console.log(id);
+      if (response.data) {
+        // response.data.match(/Aproximadamente(.*.)resultados/);
+       result.html(response.data);
+       // resultStatsGET=;
+       // console.log(resultStatsGET);
+       // console.log("resultStatsGET");
+       resultStats2= $("#b_tween .sb_count", result)[0].innerText.match(/.*\d/);;
 
- $(id).attr("notev",resultStats);
- $(id).attr("notet",titulo);
- // console.log($(id)[0].notev);
- // console.log($(id)[0].notet);
+        console.log(resultStats2);
+console.log("resultStats2");
+        // response.data
+        // var text= $("#b_tween .sb_count")[0].innerText.match(/(.*.)Resultados/);
+         resultStats= parseInt(resultStats2[0].replace(".", ""));
+        console.log(resultStats);
+if ($(id).html(resultStats)) {
+  $(id).attr("notev",resultStats);
+  $(id).attr("notet",titulo);
+}
+        // $(id).html(resultStats);
 
- // for (var i = 0; i < n; i++) {
- //
- //   if (resultStats > parseInt($("#"+i+div)[0].innerText)) {
- //     $("#betterTittle").html(titulo);
- //   }
- // }
-
-// console.log(resultStats);
-// select1R=$(select1, el);
+      }
+    // result.html(response.data);
+     // resultStatsGET=$("#result-stats", result);
+     // resultStats2 = resultStatsGET[0].innerText.match(/Aproximadamente(.*.)resultados/);
+ // resultStats= parseInt(resultStats2[1].replace(".", ""));
+ // $(id).html(resultStats);
+ // $(id).attr("notev",resultStats);
+ // $(id).attr("notet",titulo);
     });
   }
 
@@ -290,15 +364,30 @@ function getBetterTittleInterval(){
 // var labels = ["malo","bueno"];
 // whichTittle.addLabels(labels);
 
-function AddNewDataTextClassify(dataSet,tolabel,newlabel){
+function AddNewDataTextClassify(dataSet,tolabel){//newlabel
 
-if (newlabel) {
-  whichTittle.addLabels(newlabel);
-}
-  whichTittle.addData(tolabel, dataSet);
+// if (newlabel) {
+//   whichTittle.addLabels(newlabel);
+// }
+  // whichTittle.addData(tolabel, dataSet);
+      // var urlNote=proxyScrap[0]+"/https://www.google.com/search?q="+titulo;
+      var url="http://localhost:8968/AddData?method=aiClassToDB&tittle="+dataSet+"&label="+tolabel+"&apiK=1";
+      var axiosparams=new URLSearchParams();
+      axios({
+        method: 'get',
+        url: url,
+        data: axiosparams
+      }).then(function(response){
+// console.log(response);
+
+      });
 }
 
 function tryClassify(textToTryToClass){
   var text = whichTittle.classify(textToTryToClass);
 console.log("ES: " + text + "!");
 }
+
+// addDataToMongo(){
+//   //
+// }

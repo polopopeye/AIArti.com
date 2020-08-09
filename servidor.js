@@ -14,6 +14,41 @@ app.set('views', 'views');
 app.engine('ejs', engine);
 app.set('view engine', 'ejs');
 
+
+mongoose.connect('mongodb://localhost:27017/AIArtiDB', {useNewUrlParser: true,useUnifiedTopology: true});
+const db = mongoose.connection;
+const aiClassSchema = new mongoose.Schema({
+  tittle: String,
+  label: String
+});
+const aiClass = mongoose.model('SavedData', aiClassSchema,'SavedClassData');
+function aiClassToDB(tittle,label){
+
+  var aiClassResult = new aiClass({ tittle: tittle,label: label });
+  console.log(aiClassResult); // 'Silence'
+  // const
+  aiClassResult.save(function (err) {
+   if (err) return console.error(err);
+   console.log("Dato guardado correctamente manin");
+ });
+}
+
+
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function() {
+console.log("conectado que mas hay que hacer...");
+
+
+
+});
+
+
+
+
+
+//
+
+
 // END CONFIG
 
 
@@ -26,6 +61,40 @@ app.set('view engine', 'ejs');
 app.get("/MotorEngineStart",function(req,res){
 res.render('ejs/ArtiMotor/MotorEngineStart.ejs');
 });
+app.get("/TrytoClassify",function(req,res){
+res.render('ejs/ArtiMotor/TrytoClassify.ejs');
+});
+app.get("/AddData",function(req,res){
+  var actualApi=Math.floor(Date.now() / 1000)*6;//9581855202
+if (req.query.method!=undefined&&req.query.apiK!=undefined&&req.query.apiK==1) {
+
+if (req.query.method=="aiClassToDB") {
+  if (req.query.tittle&&req.query.label) {
+    aiClassToDB(req.query.tittle,req.query.label);
+    res.render('ejs/ArtiMotor/dbUpdated.ejs');
+  }
+}
+if (req.query.method=="aiClassList") {
+  aiClass.find(function (err, aiClass) {
+  if (err) return console.error(err);
+  res.send(aiClass);
+})
+}
+
+}else{
+  res.render('ejs/ArtiMotor/angryShark.ejs');
+}
+
+// if (=) {
+//   aiClassResult
+// }
+//
+// req.query.tagId
+// req.query.tagId
+
+console.log(req.query);
+});
+
 // app.get("/statusMotor",function(req,res){
 // res.render('ejs/index.ejs');
 // });

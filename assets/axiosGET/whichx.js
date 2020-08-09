@@ -25,7 +25,7 @@ function WhichX() {
                 }
             }
         } else {
-            throw new Error("Invalid label");
+             throw new Error("Invalid label");
         }
     };
 
