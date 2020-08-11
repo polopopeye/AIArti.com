@@ -6,6 +6,7 @@ var http = require('http'),
     engine = require('ejs-mate'),
     fs = require('fs'),
     mongoose = require('mongoose'),
+    Markov = require('markov-strings').default,
     WhichX = require("whichx");
 
 var app=express();
@@ -51,6 +52,37 @@ console.log("conectado que mas hay que hacer...");
 
 // END CONFIG
 
+// INI MARKOV MODEL text
+const data = ['buenosdias','como estan','espero que muy bien','todo el texto tiene que tener',
+'mucho sentido porque si no no sirve de nah',
+'este es un texto de ejemplo',
+'bueno que vaya bien señor',
+'hola como',
+'hola como estas',
+'hola como estas tu',
+'espero que bien',
+'esta frase tiene mucho sentido',
+'estoy haciendo muchas pruebas',
+'espero que añadiendo estas pruebas de ejemplo sirva de algo',
+'el resultado tiene que ser esparanzador y prometedor',
+'bueno que vaya genial humano'];
+const markov = new Markov(data, { stateSize: 1 })
+markov.buildCorpus();
+var markovoptions = {
+  maxTries: 100000, // Give up if I don't have a sentence after 20 tries (default is 10)
+  prng: Math.random, // An external Pseudo Random Number Generator if you want to get seeded results
+  // filter: (result) => {
+  //   return
+  //     result.string.split(' ').length >= 0 //&& // At least 5 words
+  //     // result.string.endsWith('.')             // End sentences with a dot.
+  // }
+}
+// var result =
+console.log("result");
+console.log(markov.generate(markovoptions).string);
+console.log(markov.generate(markovoptions).string);
+console.log(markov.generate(markovoptions).string);
+console.log("result");
 
 // app.get("/",function(req,res){
 // res.render('ejs/index.ejs');
@@ -99,7 +131,36 @@ console.log(req.query);
 // res.render('ejs/index.ejs');
 // });
 
-
+app.get("/login",function(req,res){
+  res.render('ejs/ArtiMotor/angryShark.ejs');
+});
+app.get("/login.php",function(req,res){
+  res.render('ejs/ArtiMotor/angryShark.ejs');
+});
+app.get("/admin.php",function(req,res){
+  res.render('ejs/ArtiMotor/angryShark.ejs');
+});
+app.get("/admin",function(req,res){
+  res.render('ejs/ArtiMotor/angryShark.ejs');
+});
+app.get("/wp-login",function(req,res){
+  res.render('ejs/ArtiMotor/angryShark.ejs');
+});
+app.get("/wp-login.php",function(req,res){
+  res.render('ejs/ArtiMotor/angryShark.ejs');
+});
+app.get("/wp-admin",function(req,res){
+  res.render('ejs/ArtiMotor/angryShark.ejs');
+});
+app.get("/wp-admin.php",function(req,res){
+  res.render('ejs/ArtiMotor/angryShark.ejs');
+});
+app.get("/administrator",function(req,res){
+  res.render('ejs/ArtiMotor/angryShark.ejs');
+});
+app.get("/administrator.php",function(req,res){
+  res.render('ejs/ArtiMotor/angryShark.ejs');
+});
 
 app.listen(8968);
 
