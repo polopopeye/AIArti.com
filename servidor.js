@@ -9,26 +9,69 @@ var http = require('http'),
     Markov = require('markov-strings').default,
     WhichX = require("whichx");
 
+
 var app=express();
 app.use(express.static('assets'));
 app.set('views', 'views');
 app.engine('ejs', engine);
 app.set('view engine', 'ejs');
 
+app.use( bodyParser.json() );       // to support JSON-encoded bodies
+app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
+  extended: true
+}));
 
 mongoose.connect('mongodb://localhost:27017/AIArtiDB', {useNewUrlParser: true,useUnifiedTopology: true});
 const db = mongoose.connection;
 const aiClassSchema = new mongoose.Schema({
+  id: Number,
+  status: String,
   tittle: String,
-  label: String
+  label: String,
+  note: String,
+  json: String
 });
-const aiClass = mongoose.model('SavedData', aiClassSchema,'SavedClassData');
-function aiClassToDB(tittle,label){
 
-  var aiClassResult = new aiClass({ tittle: tittle,label: label });
+const aiImportedData = new mongoose.Schema({
+  id: Number,
+  status: String,
+  tittle: String,
+  label: String,
+  note: String,
+  data: String
+});
+
+const aiClass = mongoose.model('SavedData', aiClassSchema,'SavedClassData');
+const aiData = mongoose.model('SavedData2', aiImportedData,'ArticleInputData');
+function aiClassToDB(tittle,label,json,note){
+
+  var aiClassResult = new aiClass({
+    id: Math.floor(Math.random() * 999999999999999999),
+    status: "new",
+    tittle: tittle,
+    note: note,
+    json: json,
+    label: label });
   console.log(aiClassResult); // 'Silence'
   // const
   aiClassResult.save(function (err) {
+   if (err) return console.error(err);
+   console.log("Dato guardado correctamente manin");
+ });
+}
+function aiDataToDB(tittle,label,note,data){
+
+  var aiDataResult = new aiData({
+    id: Math.floor(Math.random() * 999999999999999999),
+    status: "new",
+    tittle: tittle,
+    label: label,
+    note: note,
+    data: data
+     });
+  console.log(aiDataResult); // 'Silence'
+  // const
+  aiDataResult.save(function (err) {
    if (err) return console.error(err);
    console.log("Dato guardado correctamente manin");
  });
@@ -53,36 +96,16 @@ console.log("conectado que mas hay que hacer...");
 // END CONFIG
 
 // INI MARKOV MODEL text
-const data = ['buenosdias','como estan','espero que muy bien','todo el texto tiene que tener',
-'mucho sentido porque si no no sirve de nah',
-'este es un texto de ejemplo',
-'bueno que vaya bien señor',
-'hola como',
-'hola como estas',
-'hola como estas tu',
-'espero que bien',
-'esta frase tiene mucho sentido',
-'estoy haciendo muchas pruebas',
-'espero que añadiendo estas pruebas de ejemplo sirva de algo',
-'el resultado tiene que ser esparanzador y prometedor',
-'bueno que vaya genial humano'];
-const markov = new Markov(data, { stateSize: 1 })
-markov.buildCorpus();
-var markovoptions = {
-  maxTries: 100000, // Give up if I don't have a sentence after 20 tries (default is 10)
-  prng: Math.random, // An external Pseudo Random Number Generator if you want to get seeded results
-  // filter: (result) => {
-  //   return
-  //     result.string.split(' ').length >= 0 //&& // At least 5 words
-  //     // result.string.endsWith('.')             // End sentences with a dot.
-  // }
-}
+
 // var result =
-console.log("result");
-console.log(markov.generate(markovoptions).string);
-console.log(markov.generate(markovoptions).string);
-console.log(markov.generate(markovoptions).string);
-console.log("result");
+// setInterval(function(){
+// console.log();
+// },10);
+// console.log("result");
+// console.log();
+//
+// console.log(markov.generate(markovoptions).string);
+// console.log("result");
 
 // app.get("/",function(req,res){
 // res.render('ejs/index.ejs');
@@ -100,16 +123,16 @@ app.get("/AddData",function(req,res){
   var actualApi=Math.floor(Date.now() / 1000)*6;//9581855202
 if (req.query.method!=undefined&&req.query.apiK!=undefined&&req.query.apiK==1) {
 
-if (req.query.method=="aiClassToDB") {
-  if (req.query.tittle&&req.query.label) {
-    aiClassToDB(req.query.tittle,req.query.label);
-    res.render('ejs/ArtiMotor/dbUpdated.ejs');
-  }
-}
 if (req.query.method=="aiClassList") {
   aiClass.find(function (err, aiClass) {
   if (err) return console.error(err);
   res.send(aiClass);
+})
+}
+if (req.query.method=="aiDataList") {
+  aiData.find(function (err, aiData) {
+  if (err) return console.error(err);
+  res.send(aiData);
 })
 }
 
@@ -127,9 +150,107 @@ if (req.query.method=="aiClassList") {
 console.log(req.query);
 });
 
+
+app.post("/AddData",function(req,res){
+  var actualApi=Math.floor(Date.now() / 1000)*6;//9581855202
+if (req.body.method!=undefined&&req.body.apiK!=undefined&&req.body.apiK==1) {
+
+if (req.body.method=="aiClassToDB") {
+  if (req.body.tittle&&
+    req.body.json&&
+    req.body.note&&
+    req.body.label) {
+      // aiClassToDB(tittle,label,json,note)
+    aiClassToDB(req.body.tittle,req.body.label,req.body.json,req.body.note);
+    res.render('ejs/ArtiMotor/dbUpdated.ejs');
+  }
+}
+if (req.body.method=="aiDataToDB") {
+  if (req.body.tittle&&
+    req.body.data&&
+    req.body.note&&
+    req.body.label) {
+      // aiClassToDB(tittle,label,json,note)
+    aiDataToDB(req.body.tittle,req.body.label,req.body.note,req.body.data);
+    res.render('ejs/ArtiMotor/dbUpdated.ejs');
+  }
+}
+
+
+}else{
+  res.render('ejs/ArtiMotor/angryShark.ejs');
+}
+
+console.log(req.body);
+});
 // app.get("/statusMotor",function(req,res){
 // res.render('ejs/index.ejs');
 // });
+app.get("/scrapeArticle",function(req,res){
+  if (req.query.imported=="1") {
+    // res.render('ejs/ArtiMotor/articleScrapeImported.ejs');
+
+    aiData.find(function (err, aiData) {
+    if (err) return console.error(err);
+    // res.send(aiData);
+    // console.log(aiData[0].data);
+    var markov = new Markov(JSON.parse(aiData[0].data), { stateSize: 3})
+    markov.buildCorpus();
+     var markovoptions = {
+        maxTries: 100000, // Give up if I don't have a sentence after 20 tries (default is 10)
+       prng: Math.random // An external Pseudo Random Number Generator if you want to get seeded results
+       // prng: 1 // An external Pseudo Random Number Generator if you want to get seeded results
+      //  filter: (string) => {
+      //   return
+      //       // At least 5 words
+      // }
+     }
+     // var string=markov.generate(markovoptions);
+var string;
+function newWord(){
+string=markov.generate(markovoptions);
+// if (string.score <= 300) {
+// if (string.score <= 800) {
+if ( string.string.length<200) {
+newWord();
+}else{
+  res.send(string.string);
+  console.log(string);
+}
+}
+newWord();
+
+     // if (string.score>700) {
+     // }else{
+       // var string1=markov.generate(markovoptions);
+       // res.send(string1.string);
+       // console.log(string1);
+     // }
+  });
+  }else{
+    res.render('ejs/ArtiMotor/articleScrape.ejs');
+  }
+});
+// app.get("/createArtiFromInput",function(req,res){
+//   const data = ['buenosdias','como estan','espero que muy bien','todo el texto tiene que tener',
+//   'mucho sentido porque si no no sirve de nah',
+//   'este es un texto de ejemplo',
+//   'bueno que vaya bien señor',
+//   'hola como',
+//   'hola como estas',
+//   'hola como estas tu',
+//   'espero que bien',
+//   'esta frase tiene mucho sentido',
+//   'estoy haciendo muchas pruebas',
+//   'espero que añadiendo estas pruebas de ejemplo sirva de algo',
+//   'el resultado tiene que ser esparanzador y prometedor',
+//   'bueno que vaya genial humano'];
+//
+//
+//   res.send();
+// });
+
+
 
 app.get("/login",function(req,res){
   res.render('ejs/ArtiMotor/angryShark.ejs');

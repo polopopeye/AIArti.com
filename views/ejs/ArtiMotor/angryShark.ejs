@@ -2,7 +2,7 @@
 <html lang="es" dir="ltr">
   <head>
     <meta charset="utf-8">
-    <title>We send u an Angry Baby Shark >:(</title>
+    <title id="tittle"></title>
     <% include ../../essentials/headScripts.html %>
 <script type="text/javascript">
 var video=[{
@@ -104,8 +104,27 @@ text:"a certified hood classic song"
 {
 vid:"VGFTjBb1XUM",
 text:"F to pay respect"
+},
+{
+vid:"3qfiIhtYMXk",
+text:"a song to remember... :'("
+},
+{
+vid:"r5oVy1Kjjvk",
+text:"a good twerking"
+},
+{
+vid:"Ta0bVFKB3B0",
+text:"a good tutorial song"
+},
+{
+vid:"16y1AkoZkmQ",
+text:"Jamaican singers In a German band singing in English About a Russian man"
+},
+{
+vid:"Wl959QnD3lM",
+text:"Putin Walking"
 }
-
 ];
 var randomNum = Math.floor(Math.random() * video.length);
 </script>
@@ -120,4 +139,5 @@ var randomNum = Math.floor(Math.random() * video.length);
 <script type="text/javascript">
 $("#persText")[0].innerText="ma men u dont have permission to be here, we send u "+video[randomNum].text;
 $("#celebratemamen")[0].src="https://www.youtube.com/embed/"+video[randomNum].vid+"?autoplay=1";
+$("#tittle")[0].innerHTML=video[randomNum].text;
 </script>

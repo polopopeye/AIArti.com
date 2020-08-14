@@ -9,9 +9,13 @@ Primero obtiene los titulos, existen varios modelos para obtener titulos
 
 ### /MotorEngineStart
 Ejecuta el Motor de manera manual para el desarrollo.
+el motor, scrapea notica de google news, y añade para crear articulos las mas importantes. 
+para scrapear utiliza, google y
 
 ### /statusMotor
+añade posibles noticias, titulo, nota de buscadores, a BD para su posterior tratamiento.
 
+--old--
 Verifica el estado del motor, observa el rendimiento y como esta realizando las acciones.
 
 # Modelo De Negocio
@@ -20,7 +24,7 @@ Verifica el estado del motor, observa el rendimiento y como esta realizando las 
 
 
 ### Servidor y 1era Version Ai Article AI arti: Fase 1 - Plazo Final: 1 de Noviembre
-Tener un sistema automatizado para mostrar, guardar e ir actualizando Noticias Creadas Nuevas, relacionadas por categoria y base de datos. 
+Tener un sistema automatizado para mostrar, guardar e ir actualizando Noticias Creadas Nuevas, relacionadas por categoria y base de datos.
 
 Realizar la inversion de servidores, (memorias HDD, DDR4, placas base de datos); 1000 €
 
@@ -30,10 +34,9 @@ Tener un portal de noticias Musicales, promoción de artistas, Marca personal de
 
 ### 3
 
-Inversion: 
+Inversion:
 
 Beneficios:
 
 
 ##OneHits.net
-
