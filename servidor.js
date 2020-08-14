@@ -11,13 +11,15 @@ var http = require('http'),
 
 
 var app=express();
+app.use(express.json({ limit: 1000000000 })); //1K MB
 app.use(express.static('assets'));
 app.set('views', 'views');
 app.engine('ejs', engine);
 app.set('view engine', 'ejs');
 
-app.use( bodyParser.json() );       // to support JSON-encoded bodies
+app.use( bodyParser.json({ limit: 1000000000 }) );       // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
+limit: 1000000000,
   extended: true
 }));
 
@@ -38,7 +40,8 @@ const aiImportedData = new mongoose.Schema({
   tittle: String,
   label: String,
   note: String,
-  data: String
+  data: String,
+  jsonTittle: String
 });
 
 const aiClass = mongoose.model('SavedData', aiClassSchema,'SavedClassData');
@@ -59,7 +62,7 @@ function aiClassToDB(tittle,label,json,note){
    console.log("Dato guardado correctamente manin");
  });
 }
-function aiDataToDB(tittle,label,note,data){
+function aiDataToDB(tittle,label,note,data,jsonTittle){
 
   var aiDataResult = new aiData({
     id: Math.floor(Math.random() * 999999999999999999),
@@ -67,7 +70,8 @@ function aiDataToDB(tittle,label,note,data){
     tittle: tittle,
     label: label,
     note: note,
-    data: data
+    data: data,
+    jsonTittle:jsonTittle
      });
   console.log(aiDataResult); // 'Silence'
   // const
@@ -171,7 +175,7 @@ if (req.body.method=="aiDataToDB") {
     req.body.note&&
     req.body.label) {
       // aiClassToDB(tittle,label,json,note)
-    aiDataToDB(req.body.tittle,req.body.label,req.body.note,req.body.data);
+    aiDataToDB(req.body.tittle,req.body.label,req.body.note,req.body.data,req.body.jsonTittle);
     res.render('ejs/ArtiMotor/dbUpdated.ejs');
   }
 }
@@ -189,41 +193,63 @@ console.log(req.body);
 app.get("/scrapeArticle",function(req,res){
   if (req.query.imported=="1") {
     // res.render('ejs/ArtiMotor/articleScrapeImported.ejs');
+    var loaded=false;
 
     aiData.find(function (err, aiData) {
     if (err) return console.error(err);
-    // res.send(aiData);
-    // console.log(aiData[0].data);
+
     var markov = new Markov(JSON.parse(aiData[0].data), { stateSize: 3})
     markov.buildCorpus();
      var markovoptions = {
         maxTries: 100000, // Give up if I don't have a sentence after 20 tries (default is 10)
        prng: Math.random // An external Pseudo Random Number Generator if you want to get seeded results
-       // prng: 1 // An external Pseudo Random Number Generator if you want to get seeded results
-      //  filter: (string) => {
-      //   return
-      //       // At least 5 words
-      // }
      }
-     // var string=markov.generate(markovoptions);
 var string;
 function newWord(){
 string=markov.generate(markovoptions);
 // if (string.score <= 700) {
 // if (string.score <= 300) {
+if (string.score <= 1) {
 // if (string.score <= 800) {
- if ( string.string.length<200) {
+ // if ( string.string.length<200) {
 newWord();
 }else{
-  res.send(string.string);
+  // res.send();
   console.log(string);
+  loaded=true;
 }
 }
 newWord();
+// console.log(aiData[0].jsonTittle);
 
+// var markov2 = new Markov(JSON.parse(aiData[0].jsonTittle), { stateSize: 2})
+var markov2 = new Markov(JSON.parse(aiData[0].jsonTittle), { stateSize: 1})//maximo a no ser que se limite de otro lado
+markov2.buildCorpus();
+ var markov2options = {
+    maxTries: 100000, // Give up if I don't have a sentence after 20 tries (default is 10)
+   prng: Math.random // An external Pseudo Random Number Generator if you want to get seeded results
+ }
+var string2;
+function newWord2(){
+string2=markov2.generate(markov2options);
+// if (string2.score <= 700) {
+// if (string2.score <= 300) {
+if (string2.score>=4||loaded==false) {
+
+  newWord2();
+
+}else{
+
+    console.log(string2);
+    res.send("Titulo:"+string2.string+"<br>Articulo:<br>"+string.string);
+        // res.send("Titulo:"+string2.string);
+
+}
+}
+newWord2();
      // if (string.score>700) {
      // }else{
-       // var string1=markov.generate(markovoptions);
+       // var string1=markov2.generate(markovoptions);
        // res.send(string1.string);
        // console.log(string1);
      // }

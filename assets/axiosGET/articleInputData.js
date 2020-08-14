@@ -11,6 +11,9 @@ var whichTittle = new WhichX();
 // para posteriormente guardarlo en una base de datos.
 
 var data;
+var tittleData;
+var noteData;
+var labelData;
 function getArtiToScrap(){
   var url="http://localhost:8968/AddData?method=aiClassList&apiK=1";
   var axiosparams=new URLSearchParams();
@@ -26,6 +29,9 @@ $("#infoPage")[0].innerHTML="";
   // for (var i = 0; i < response.data.length; i++) {
   for (var i = 0; i < 1; i++) {
 var json=JSON.parse(data[i].json);
+tittleData=data[i].tittle;
+noteData=data[i].note;
+labelData=data[i].label;
 for (var k = 0; k < json.length; k++) {
   // json[i].link
   $("#infoPage")[0].innerHTML+=`
@@ -77,6 +83,8 @@ function showData(){
 
 var linkScrapeResponse;
 var dataImported=[];
+var jsonTittle=[];
+
 var thisLinkArticle;
 function scrapLink(link,tittle){
   thisLinkArticle="";
@@ -96,22 +104,33 @@ linkScrapeResponse=response.data;
   var result = $( '<div></div>' );
   result.html(linkScrapeResponse);
   for(var j=0; j< $("p",result).length ; j++){
-    if ($("p",result)[j].innerText.length>300&&$("p",result)[j].innerText.length<2000) {
-      thisLinkArticle+=$("p",result)[j].innerText+" ";
-      console.log($("p",result)[j].innerText);
+    if ($("p",result)[j].innerText.length>400&&$("p",result)[j].innerText.length<50000) {
+      if (/[dD]erechos.*reservados|[cC]opyright/.test($("p",result)[j].innerText)) {
+console.log("descartado por Copyright");
+console.log($("p",result)[j].innerText);
+      }else{
+        thisLinkArticle+=$("p",result)[j].innerText+" ";
+        console.log($("p",result)[j].innerText);
+      }
     }
   };
   dataImported.push(thisLinkArticle);
+
+  if (/\||.com| - /.test(tittle)){
+    console.log("titulo bloqueado por posible publicidad");
+  }else{
+    jsonTittle.push(tittle);
+  }
   }
   });
 }
 
 setTimeout(function(){
   console.log("GUARDADO");
-  saveImportedData("tittle","label","note",JSON.stringify(dataImported));
+  saveImportedData(tittleData,labelData,noteData,JSON.stringify(dataImported),JSON.stringify(jsonTittle));
 },4000)
 
-function saveImportedData(tittle,label,note,data){ //newlabel
+function saveImportedData(tittle,label,note,data,jsonTittle){ //newlabel
        var url="http://localhost:8968/AddData";
       var axiosparams=new URLSearchParams();
       axiosparams.append('method', "aiDataToDB");
@@ -119,6 +138,7 @@ function saveImportedData(tittle,label,note,data){ //newlabel
       axiosparams.append('label', label);
       axiosparams.append('note', note);
       axiosparams.append('data', data);
+      axiosparams.append('jsonTittle', jsonTittle);
       axiosparams.append('apiK', "1");
       axios({
         method: 'post',
