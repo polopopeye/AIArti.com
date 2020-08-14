@@ -46,7 +46,7 @@ for (var k = 0; k < json.length; k++) {
   </div>
   </div>
 `;
-scrapLink(json[k].link);
+scrapLink(json[k].link,json[k].tittle);
 // BACKEND
 
 
@@ -77,7 +77,9 @@ function showData(){
 
 var linkScrapeResponse;
 var dataImported=[];
-function scrapLink(link){
+var thisLinkArticle;
+function scrapLink(link,tittle){
+  thisLinkArticle="";
   linkScrapeResponse="";
   var url=proxyScrap[0]+link;
   var axiosparams=new URLSearchParams();
@@ -94,11 +96,12 @@ linkScrapeResponse=response.data;
   var result = $( '<div></div>' );
   result.html(linkScrapeResponse);
   for(var j=0; j< $("p",result).length ; j++){
-    if ($("p",result)[j].innerText.length>200) {
-      dataImported.push($("p",result)[j].innerText);
+    if ($("p",result)[j].innerText.length>300&&$("p",result)[j].innerText.length<2000) {
+      thisLinkArticle+=$("p",result)[j].innerText+" ";
       console.log($("p",result)[j].innerText);
     }
   };
+  dataImported.push(thisLinkArticle);
   }
   });
 }

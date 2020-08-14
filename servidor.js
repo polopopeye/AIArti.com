@@ -209,9 +209,10 @@ app.get("/scrapeArticle",function(req,res){
 var string;
 function newWord(){
 string=markov.generate(markovoptions);
+// if (string.score <= 700) {
 // if (string.score <= 300) {
 // if (string.score <= 800) {
-if ( string.string.length<200) {
+ if ( string.string.length<200) {
 newWord();
 }else{
   res.send(string.string);
