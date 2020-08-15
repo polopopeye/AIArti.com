@@ -223,7 +223,7 @@ newWord();
 // console.log(aiData[0].jsonTittle);
 
 // var markov2 = new Markov(JSON.parse(aiData[0].jsonTittle), { stateSize: 2})
-var markov2 = new Markov(JSON.parse(aiData[0].jsonTittle), { stateSize: 1})//maximo a no ser que se limite de otro lado
+var markov2 = new Markov(JSON.parse(aiData[0].jsonTittle), { stateSize: 3})//maximo a no ser que se limite de otro lado
 markov2.buildCorpus();
  var markov2options = {
     maxTries: 100000, // Give up if I don't have a sentence after 20 tries (default is 10)
@@ -234,15 +234,16 @@ function newWord2(){
 string2=markov2.generate(markov2options);
 // if (string2.score <= 700) {
 // if (string2.score <= 300) {
-if (string2.score>=4||loaded==false) {
+if (string2.score>=10||loaded==false) {
 
   newWord2();
 
 }else{
-
     console.log(string2);
     res.send("Titulo:"+string2.string+"<br>Articulo:<br>"+string.string);
         // res.send("Titulo:"+string2.string);
+        console.log(string.score);
+        console.log(string2.score);
 
 }
 }
