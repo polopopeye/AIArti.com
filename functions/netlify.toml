@@ -1,0 +1,4 @@
+command = 'node servidor.js'
+functionsPort = 8968
+port = 8968
+targetPort = 8968
