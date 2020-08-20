@@ -240,13 +240,13 @@ limit: 1000000000,
 // FIN
 
 
-// http.createServer(function(req, res) {
-//   if (req.url === "/") {
-//     res.writeHead(200, { "Content-Type": "text/html" });
-//     res.end("Welcome to the homepage!");
-//   }
-//
-// }).listen(1337, "localhost");
+http.createServer(function(req, res) {
+  if (req.url === "/") {
+    res.writeHead(200, { "Content-Type": "text/html" });
+    res.end("Welcome to the homepage!");
+  }
+
+}).listen(1337);
 app.get("/login",function(req,res){
   res.render('ejs/ArtiMotor/angryShark.ejs');
 });
