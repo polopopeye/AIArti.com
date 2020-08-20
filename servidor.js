@@ -272,7 +272,7 @@ app.get("/administrator.php",function(req,res){
 app.get("/",function(req,res){
 res.render('ejs/ArtiMotor/workInProgress.ejs');
 });
-app.listen(8968);
+app.listen(80);
 
 setTimeout(lineaSeparatoria, 100);
 setTimeout(textoBlack, 1000);
