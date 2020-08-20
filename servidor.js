@@ -1,4 +1,5 @@
 var http = require('http'),
+    serverless = require('serverless-http'),
     express=require("express"),
     bodyParser = require('body-parser'),
     os = require('os'),
@@ -239,6 +240,13 @@ limit: 1000000000,
 // FIN
 
 
+http.createServer(function(req, res) {
+  if (req.url === "/") {
+    res.writeHead(200, { "Content-Type": "text/html" });
+    res.end("Welcome to the homepage!");
+  }
+
+}).listen(1337, "localhost");
 app.get("/login",function(req,res){
   res.render('ejs/ArtiMotor/angryShark.ejs');
 });
@@ -272,7 +280,9 @@ app.get("/administrator.php",function(req,res){
 app.get("/",function(req,res){
 res.render('ejs/ArtiMotor/workInProgress.ejs');
 });
-app.listen(8968);
+
+module.exports.handler = serverless(app);
+// app.listen(8968);
 
 setTimeout(lineaSeparatoria, 100);
 setTimeout(textoBlack, 1000);
