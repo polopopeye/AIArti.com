@@ -137,20 +137,24 @@ function WhichX() {
     }
 
     // Stop words including tcount & wordtotal (because they are key words in the maps used to store the data).
-    var STOPWORDS = ["a", "all", "am", "an", "and", "any", "are", "as", "at", "be", "because",
-        "been", "being", "but", "by", "count", "could", "did", "do", "does", "doing", "during",
-        "each", "few", "for", "had", "has", "have", "having", "he", "hed", "hes",
-        "her", "here", "heres", "hers", "herself", "him", "himself", "his", "how",
-        "hows", "i", "id", "im", "ive", "if", "in", "into", "is", "it", "its", "itself",
-        "lets", "me", "more", "most", "my", "myself", "of", "off", "on", "once",
-        "only", "or", "other", "ought", "our", "ours", "ourselves", "over", "own",
-        "same", "she", "shes", "should", "so", "some", "such", "than", "that",
-        "thats", "the", "their", "theirs", "them", "themselves", "then", "there",
-        "theres", "these", "they", "theyd", "theyll", "theyre", "theyve", "this",
-        "those", "through", "to", "too", "until", "was", "we", "wed", "well", "were",
-        "weve", "what", "whats", "when", "whens", "where", "wheres", "which",
-        "while", "who", "whos", "whom", "why", "whys", "with", "wordtotal", "would", "you", "youd",
-        "youll", "youre", "your", "youve", "yours", "yourself", "yourselves"];
+    // var STOPWORDS = ["a", "all", "am", "an", "and", "any", "are", "as", "at", "be", "because",
+    //     "been", "being", "but", "by", "count", "could", "did", "do", "does", "doing", "during",
+    //     "each", "few", "for", "had", "has", "have", "having", "he", "hed", "hes",
+    //     "her", "here", "heres", "hers", "herself", "him", "himself", "his", "how",
+    //     "hows", "i", "id", "im", "ive", "if", "in", "into", "is", "it", "its", "itself",
+    //     "lets", "me", "more", "most", "my", "myself", "of", "off", "on", "once",
+    //     "only", "or", "other", "ought", "our", "ours", "ourselves", "over", "own",
+    //     "same", "she", "shes", "should", "so", "some", "such", "than", "that",
+    //     "thats", "the", "their", "theirs", "them", "themselves", "then", "there",
+    //     "theres", "these", "they", "theyd", "theyll", "theyre", "theyve", "this",
+    //     "those", "through", "to", "too", "until", "was", "we", "wed", "well", "were",
+    //     "weve", "what", "whats", "when", "whens", "where", "wheres", "which",
+    //     "while", "who", "whos", "whom", "why", "whys", "with", "wordtotal", "would", "you", "youd",
+    //     "youll", "youre", "your", "youve", "yours", "yourself", "yourselves"];
+
+var STOPWORDS = ["y","de","para","el","si","no","por","que","como","porque","tu","cuando","podria","puede","esto"];
+
+
 
     // Process the description into an array of pertinent standardized lower case words.
     function processToArray(description) {
@@ -175,6 +179,6 @@ function WhichX() {
 }
 
 // Export whichx function if using node.
-if (module && module.exports) {
-    module.exports = WhichX;
-}
+// if (module && module.exports) {
+//     module.exports = WhichX;
+// }
