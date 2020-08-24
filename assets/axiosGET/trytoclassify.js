@@ -32,19 +32,15 @@ importDataLearned();
   $('#selectNewSourceButton2').on('click', function() {
     $("#resultClassify")[0].innerHTML=whichTittle.classify($("#newsQueryToSearch").val());
     // whichTittle.classify($("#newsQueryToSearch").val());
-
     });
 
   $('#newsQueryToSearch').on('input', function() {
      // alert( this.value );
     // readNews();
-
 //     newsQueryToSearch=$("#newsQueryToSearch")[0].value;
 //     var urltoUpdate=proxyScrap[0]+"/https://news.google.com/search?q="+newsQueryToSearch+"&hl=es-419&gl=EN&:es-419&ceid=EN:es-419";
 //     SourceTittle[0].url=urltoUpdate;
 // setTimeout(reloadList(),1000);
-//
-
     });
 
 function importDataLearned(){
